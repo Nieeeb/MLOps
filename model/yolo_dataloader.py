@@ -27,7 +27,7 @@ def load_data(datapath):
 
 
 # A: Finde ud af hvordan YOLOv5 gerne vil have data ind - William
-# B: Hvordan initialiserer man en YOLOv5 model så den er klar til at træne/så den kan få noget af dataen - Victor
+# B: Hvordan initialiserer man en YOLOv5 model så den er klar til at træne/så den kan få noget af dataen - Victor (Skriver det i Lecture 1)
 # C: Plotte en bounding box på vores data - Xander
 
 
