@@ -1,0 +1,63 @@
+{
+  "os":  "Linux-6.13.1-arch1-1-x86_64-with-glibc2.41",
+  "python":  "3.11.10",
+  "startedAt":  "2025-02-11T09:06:59.044534Z",
+  "args":  [
+    "--img",
+    "640",
+    "--cfg",
+    "yolov5s.yaml",
+    "--hyp",
+    "hyp.scratch-med.yaml",
+    "--batch",
+    "32",
+    "--epochs",
+    "100",
+    "--data",
+    "model/yolov5_github/data/ltd.yaml",
+    "--weights",
+    "yolov5s.pt",
+    "--workers",
+    "24",
+    "--name",
+    "yolo_ltd_det"
+  ],
+  "program":  "/home/nieb/Projects/DAKI Mini Projects/MLOps/model/yolov5_github/train.py",
+  "codePath":  "model/yolov5_github/train.py",
+  "git":  {
+    "remote":  "https://github.com/Nieeeb/MLOps/",
+    "commit":  "bc8ea56180e087921c888e9cab566132d9f6ae78"
+  },
+  "email":  "william_nieboer@hotmail.com",
+  "root":  "/home/nieb/Projects/DAKI Mini Projects/MLOps",
+  "host":  "Unifier",
+  "username":  "nieb",
+  "executable":  "/home/nieb/.conda/envs/UNI/bin/python",
+  "codePathLocal":  "model/yolov5_github/train.py",
+  "cpu_count":  8,
+  "cpu_count_logical":  16,
+  "gpu":  "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "964812906496",
+      "used":  "610689699840"
+    }
+  },
+  "memory":  {
+    "total":  "16137310208"
+  },
+  "cpu":  {
+    "count":  8,
+    "countLogical":  16
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "memoryTotal":  "4294967296",
+      "cudaCores":  2048,
+      "architecture":  "Ampere"
+    }
+  ],
+  "cudaVersion":  "12.8"
+}
