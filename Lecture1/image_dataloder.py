@@ -26,16 +26,23 @@ For initializing the class the inputs are:
     pattern_img - the type of extension that is being searched for
 '''
 
-class Dataset(torch.utils.data.Dataset):
+class ThermalDataset(torch.utils.data.Dataset):
     def __init__(self, img_dir, selection, return_metadata = True, transforms=None, check_data = False, pattern_img = '.jpg'):
 
         self.selection = selection
         self.return_metadata = return_metadata
         self.transforms = transforms
+        
+
+        # file_path_list = img_dir + "/" + selection["Folder name"].astype(str) + "_" + selection["Clip Name"].astype(str) + "_img_" +  selection["Image Number"].astype(str) + pattern_img
+            
+        # for img in file_path_list:
+        #     print(img)
+        #     break
 
         #  create a list of image directories from the metadata entries
         if platform == "linux" or platform == "linux2" or platform == "darwin":
-            self.image_list = img_dir + "/" + selection["Folder name"].astype(str) + "/" + selection["Clip Name"].astype(str) + "/" + "image_" +  selection["Image Number"].astype(str).str.zfill(4) + pattern_img
+            self.image_list = img_dir + "/" + selection["Folder name"].astype(str) + "_" + selection["Clip Name"].astype(str) + "_img_" +  selection["Image Number"].astype(str) + pattern_img
         else:
             self.image_list = img_dir + "\\" + selection["Folder name"].astype(str) + "\\" + selection["Clip Name"].astype(str) + "\\" + "image_" +  selection["Image Number"].astype(str).str.zfill(4) + pattern_img
 
@@ -56,25 +63,26 @@ class Dataset(torch.utils.data.Dataset):
 
     # function for loading a specific image and its path
     def load_image(self, image_path):
-        #print(image_path)
         img = cv2.imread(image_path,-1)
+        cv2.imshow("hahah", img)
         return img[:, :, np.newaxis], image_path
 
     # function for getting the metadata for the specified image
     def get_img_metadata(self, image_path):
         if platform == "linux" or platform == "linux2" or platform == "darwin":
-            img_path_split = image_path.split("/")
+            img_path_split = image_path.split("_")
         else:
             img_path_split = image_path.split("\\")
-        img_folder = img_path_split[-3]
+        img_folder = img_path_split[0].split('/')[3]
+        
 
-        clip_file = img_path_split[-2].split(".")[0]
+        clip_file = img_path_split[1].split(".")[0] + "_" + img_path_split[2].split(".")[0] + "_" + img_path_split[3].split(".")[0]
 
-        img_file = img_path_split[-1].split(".")[0].split("_")[1]
+        img_file = img_path_split[-1].split(".")[0].split("_")[0]
 
         # print(f" {img_folder}          {img_file}")
         curr_metadata = self.selection[(self.selection["Folder name"]== int(img_folder))&(self.selection["Clip Name"]== clip_file)&(self.selection["Image Number"]== int(img_file))].dropna()
-
+        print(curr_metadata)
         return curr_metadata
 
     #  __getitem__ function that loads an image from an index, normalizes it between 0 and 1, makes it into a tensor of float and unsqueezes it
@@ -107,21 +115,23 @@ class Dataset(torch.utils.data.Dataset):
 
 if __name__ == '__main__':
 
-    images_path = r"Image Dataset"
-    metadata_file_name = "metadata_images.csv"
-    metadata_path = os.path.join(images_path,metadata_file_name)
+    images_path = r"Data/training/Feb Day"
+    metadata_file_name = r"Data/training_metadata/feb_day.csv"
+    #metadata_path = os.path.join(images_path,metadata_file_name)
 
-    metadata = pd.read_csv(metadata_path)
+    metadata = pd.read_csv(metadata_file_name)
 
-    metadata["DateTime"] = pd.to_datetime(metadata['DateTime'], dayfirst = True)
+    metadata["DateTime"] = pd.to_datetime(metadata['DateTime'], dayfirst = False)
 
     # metadata_selected = metadata[(metadata["DateTime"].dt.day>=1) & (metadata["DateTime"].dt.day<=7) & (metadata["DateTime"].dt.month==2)]
 
-    dataset = Dataset(img_dir=images_path, selection = metadata, return_metadata = True)
+    dataset = ThermalDataset(img_dir=images_path, selection = metadata, return_metadata = True, check_data= True)
 
     # trial = next(iter(dataset))
 
-    # for i, sample in enumerate(dataset):
-    #     img, path, metadata = sample
 
-    #     print(metadata)
+
+    
+    for i, sample in enumerate(dataset):
+        img, path, metadata = sample
+        cv2.waitKey(0)
