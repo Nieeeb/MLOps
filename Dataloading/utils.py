@@ -72,7 +72,8 @@ def load_datasets(args):
     '''
     
     from coco import COCODataset
-    train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, removeBackground=args.cropBackground)
+    #train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, removeBackground=args.cropBackground)
+    train_dataset = None
     val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass, removeBackground=args.cropBackground)
     test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass, removeBackground=args.cropBackground)
 

@@ -39,8 +39,13 @@ class COCODataset(Dataset):
     def __getitem__(self, idx: int) -> Tuple[Tensor, dict]:
         imgID = self.ids[idx]
         imgInfo = self.coco.imgs[imgID]        
-        imgPath = os.path.join(self.root, imgInfo['file_name'])
-        image = Image.open(imgPath).convert('L')
+        #imgPath = os.path.join(self.root, imgInfo['file_name'])
+        print("Step 1")
+        print(self.root)
+        print("step 2")
+        print(imgInfo['file_name'])
+        print("step 3")
+        image = Image.open(imgInfo['file_name']).convert('L')
 
         # crop the pil image by removing the top part, remove the first 96 pixels
         if self.removeBackground:

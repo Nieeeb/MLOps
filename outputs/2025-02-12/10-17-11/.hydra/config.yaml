@@ -1,0 +1,66 @@
+seed: 42
+numGroups: 8
+growthRate: 32
+currentDir: ${hydra:runtime.cwd}
+model: None
+dummy: false
+hiddenDims: 512
+numHead: 8
+numEncoderLayer: 6
+numDecoderLayer: 6
+dimFeedForward: 2048
+dropout: 0.1
+numQuery: 80
+numClass: 4
+numBlocks:
+- 6
+- 6
+- 6
+- 6
+inChans: 1
+targetHeight: 384
+targetWidth: 384
+classes:
+  0: person
+  1: bicycle
+  2: motorcycle
+  3: vehicle
+dlfCost: null
+device: cpu
+weight: ''
+lr: 5.0e-07
+lrBackbone: 1.0e-05
+batchSize: 7
+weightDecay: 0.0001
+epochs: 100
+lrDrop: 1000
+clipMaxNorm: 0.1
+patience: 15
+classCost: 0.5
+bboxCost: 7.5
+giouCost: 2.5
+eosCost: 0.1
+cropBackground: false
+dataDir: /home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/
+trainAnnFile: /home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/Train.json
+valAnnFile: /home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/Valid.json
+testAnnFile: /home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/Test.json
+trainVideoFrames: ${hydra:runtime.cwd}/data/new/videoFrames/Train
+valVideoFrames: ${hydra:runtime.cwd}/data/new/videoFrames/Valid
+testVideoFrames: ${hydra:runtime.cwd}/data/new/videoFrames/Test
+videoDir: ${hydra:runtime.cwd}/data/Video Clips
+numFrames: 4
+spynet:
+  weights: ${hydra:runtime.cwd}/checkpoint/spynet/network-sintel-final.pytorch
+  freeze: true
+outputDir: ${hydra:runtime.cwd}/checkpoint
+taskName: DETR
+numWorkers: 1
+multi: false
+amp: false
+wandbEntity: null
+wandbProject: conditioning-transformer
+inference:
+  savePlot: false
+  showPlot: false
+  savePrediction: false
