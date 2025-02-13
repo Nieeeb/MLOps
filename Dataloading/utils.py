@@ -9,7 +9,8 @@ def load_weights(model, weight_path, device):
     else:
         print('no pre-trained weights found, training from scratch...')
     return model
-        
+
+""" 
 def load_model(args):
     if args.model == 'early-sum-detr':
         from src.models.detr.earlySumDetr import EarlySummationDETR
@@ -57,19 +58,20 @@ def load_model(args):
         model = torch.nn.DataParallel(model)
 
     return model 
-
+"""
 
 def load_datasets(args):
+    """
     if args.model == 'vsr-yolos' or args.model == 'estrnn-yolos':
-        from src.datasets.coco_video import VideoCOCODataset
+        from coco_video import VideoCOCODataset
         train_dataset = VideoCOCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.trainVideoFrames, args.numFrames, dummy=args.dummy, removeBackground=args.cropBackground)
         val_dataset = VideoCOCODataset(args.dataDir, args.valAnnFile, args.numClass, args.valVideoFrames, args.numFrames, dummy=args.dummy, removeBackground=args.cropBackground)
         test_dataset = VideoCOCODataset(args.dataDir, args.testAnnFile, args.numClass, args.testVideoFrames, args.numFrames, dummy=args.dummy, removeBackground=args.cropBackground)
-        
-    else:
-        from src.datasets.coco import COCODataset
-        train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, removeBackground=args.cropBackground)
-        val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass, removeBackground=args.cropBackground)
-        test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass, removeBackground=args.cropBackground)
+    """    
+
+    from Dataloading.coco import COCODataset
+    train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, removeBackground=args.cropBackground)
+    val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass, removeBackground=args.cropBackground)
+    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass, removeBackground=args.cropBackground)
 
     return train_dataset, val_dataset, test_dataset
