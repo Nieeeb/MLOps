@@ -25,17 +25,9 @@ from util import non_max_suppression
 
 from nn import yolo_v8_n
 
-def draw_boxes(image, bbox):
-    img_copy = image.copy()
-    for i in range(len(bbox)):
-        x, y, w, h, c, b = bbox[i].cpu().detach().numpy().astype('int')
-        print(bbox[i].cpu().detach().numpy().astype('int'))
-        cv2.rectangle(img_copy, (x, y), (w, h), (0, 0, 255), 5)
-    return img_copy
-
-
 @hydra.main(config_path="../../config", config_name="config")
 def main(args):
+    # Creating a model and defining number of classes
     model = yolo_v8_n(num_classes=4).cuda()
 
     #train_dataset, val_dataset, test_dataset = load_datasets(args)
@@ -43,21 +35,25 @@ def main(args):
     path = '/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/frames/20200514/clip_0_1331/image_0110.jpg'
     image = PIL.Image.open(path)
     image.show()
-
+    # Image is 1 color channel, here we convert to 3 color channels. Should probably change model input dim instead
     image_gray = F.to_grayscale(image, num_output_channels=3)
 
     tensor = F.to_tensor(image_gray).cuda()
+    # Add batch dimension
     tensor = tensor.unsqueeze(0)
     print(tensor.shape)
 
+    # Forward pass through the model
     prediction = model(tensor)
+    # Built in function to remove some of the overlapping boxes
     prediction = non_max_suppression(prediction, 0.001, 0.65)
     #for idx in range(prediction[0].shape[1]):
     #    print(prediction[0][idx])
-
     
-    boxes_image = draw_boxes(image, prediction[0])
-    boxes_image.show()
+    # Right now, current problems are:
+    # Dont know what the output consists off. What is in each tensor dimension?
+    # Do we need to scale output boxes to fit the image?
+
     
 
 

@@ -18,10 +18,10 @@ def upload_local_directory_to_minio(local_path, bucket_name, minio_path, client)
                     minio_path, local_file)
                 remote_path = remote_path.replace(
                     os.sep, "/")  # Replace \ with / on Windows
-                split_remote = remote_path.split('/v2/')[1]
-                print(split_remote)
-                #print(f"Uploading {local_file} to {remote_path}", flush=True)
-                #client.fput_object(bucket_name, remote_path, local_file)
+                split_remote = remote_path.split('/v1/')[1]
+                #print(split_remote)
+                #print(f"Uploading {local_file} to {split_remote}", flush=True)
+                client.fput_object(bucket_name, split_remote, local_file)
 
 def main():
     # Create a client with the MinIO server playground, its access key
@@ -31,7 +31,7 @@ def main():
         secret_key="harborfront",
     )
 
-    path = r"/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/"
+    path = r"/home/nieb/Projects/Big Data/Images/Seasons_drift/v1/harborfrontv1/"
 
     upload_local_directory_to_minio(local_path=path, bucket_name="thermaldrift", minio_path='', client=client)
 
