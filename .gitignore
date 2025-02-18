@@ -1,5 +1,8 @@
 # Data
-Data/
+Data/*
+
+# Secrets
+secrets/*
 
 #Outputs
 outputs/*

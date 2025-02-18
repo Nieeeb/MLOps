@@ -17,7 +17,8 @@ class COCODataset(Dataset):
             root: str, 
             annotation: str, 
             numClass: int = 4, 
-            removeBackground: bool = True,):
+            removeBackground: bool = True,
+            online: bool = False,):
         self.root = root
         self.coco = COCO(annotation)
         self.ids = list(self.coco.imgs.keys())
@@ -26,6 +27,13 @@ class COCODataset(Dataset):
         self.transforms = T.Compose([
             T.ToTensor()
         ])
+        
+        # Items needed for downloading data remotely
+        self.online = online
+        if self.online:
+            from onlinetools import request_image, create_session
+            self.client, self.credentials = create_session()
+            self.request_image = request_image
 
         self.newIndex = {}
         classes = []
@@ -40,7 +48,11 @@ class COCODataset(Dataset):
         imgID = self.ids[idx]
         imgInfo = self.coco.imgs[imgID]        
         imgPath = os.path.join(self.root, imgInfo['file_name'])
-        image = Image.open(imgPath).convert('L')
+        if not self.online:
+            image = Image.open(imgPath).convert('L')
+        else:
+            remote_path = 'harborfrontv2/' + imgPath
+            image = self.request_image(client=self.client, bucket=self.credentials['bucket'], image_path=remote_path)
 
         # crop the pil image by removing the top part, remove the first 96 pixels
         if self.removeBackground:
