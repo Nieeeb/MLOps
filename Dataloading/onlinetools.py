@@ -8,7 +8,7 @@ import json
 from minio import Minio
 import urllib3
 from typing import Tuple, Dict
-from coco import COCODataset
+from Dataloading.coco import COCODataset
 from torch.utils.data import DataLoader
 from PIL import Image
 import io
@@ -18,10 +18,11 @@ import io
 # File must contain: {"endpoint": "xxx", "bucket": "xxx", "username": "xxx", "password": "xxx"}
 def load_credentials() -> Dict[str, str]:
     path = r'secrets/credentials.json'
-    assert os.path.exists(path)
+    stupid_path = '/home/nieb/Projects/DAKI Mini Projects/MLOps/secrets/credentials.json'
+    assert os.path.exists(stupid_path)
     
     credentials = None
-    with open(path, 'r', encoding='utf-8') as file:
+    with open(stupid_path, 'r', encoding='utf-8') as file:
         credentials = json.load(file)
         file.close()
     return credentials
@@ -75,9 +76,9 @@ def stream_file(client, bucket, object_path) -> urllib3.response.HTTPResponse:
     response = None
     try:
         response = client.get_object(bucket, object_path)
-        print(type(response))
+        # print(type(response))
         data = response.data
-        print(type(data))
+        # print(type(data))
         return data
     finally:
         if response:

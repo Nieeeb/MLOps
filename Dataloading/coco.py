@@ -1,4 +1,9 @@
+import sys
 import os
+
+root_dir = os.getcwd()
+sys.path.append(root_dir)
+
 from typing import List, Tuple, Dict
 import numpy as np
 import torch
@@ -9,6 +14,7 @@ from torch.utils.data.dataset import Dataset
 import Dataloading.transforms as T
 import hydra
 from collections import defaultdict
+
 
 
 
@@ -31,7 +37,7 @@ class COCODataset(Dataset):
         # Items needed for downloading data remotely
         self.online = online
         if self.online:
-            from onlinetools import request_image, create_session
+            from Dataloading.onlinetools import request_image, create_session
             self.client, self.credentials = create_session()
             self.request_image = request_image
 
