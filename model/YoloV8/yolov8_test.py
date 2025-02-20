@@ -12,7 +12,7 @@ import warnings
 import PIL.Image
 import numpy
 import torch
-import tqdm
+from tqdm import tqdm
 import yaml
 from torch.utils import data
 from Dataloading.utils import load_datasets
@@ -32,6 +32,8 @@ import matplotlib.pyplot as plt
 
 from matplotlib import patches
 import numpy as np
+
+from model.YoloV8.util import ComputeLoss
 
 
 '''
@@ -89,7 +91,7 @@ def visualize(inputs: torch.Tensor, outputs: torch.Tensor, class_names: list):
 def main():
     class_names = ['person',  'bicycle', 'motorcycle', 'vehicle']
     # Creating a model and defining number of classes
-    model = yolo_v8_n(num_classes=4).cpu()
+    model = yolo_v8_n(num_classes=4).cuda()
 
     #train_dataset, val_dataset, test_dataset = load_datasets(args)
     model.eval()
@@ -98,7 +100,7 @@ def main():
     object = 'Test.json'
     object_path = 'harborfrontv2/' + object
     output_path = 'outputs/' + object
-    stupid_patth = '/home/xander/Documents/School/MLOps/outputs/Valid.json'
+    stupid_patth = '/home/nieb/Projects/DAKI Mini Projects/MLOps/outputs/Valid.json'
     train_dataset = COCODataset(root='', annotation=stupid_patth, numClass=4, online=True)
     train_loader = data.DataLoader(train_dataset, batch_size=1)
 
@@ -106,18 +108,26 @@ def main():
 
 
     epochs = 1
-    with open(os.path.abspath('/home/xander/Documents/School/MLOps/model/YoloV8/args.yaml')) as f:
+    with open(os.path.abspath('/home/nieb/Projects/DAKI Mini Projects/MLOps/model/YoloV8/args.yaml')) as f:
         params = yaml.safe_load(f)
 
-    criterion = YoloCriterion(params, model)
+    #criterion = YoloCriterion(params, model)
+    criterion = ComputeLoss(model, params) # Loss fra yolo github virker, men giver infinite loss. Umiddelbart fordi targets er forkert format
 
     for epoch in range(epochs):
         for batch_idx, (inputs, targets) in enumerate(train_loader):
+            model.train()
+            inputs = inputs.cuda()
+            #targets = targets.cuda()
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
-            print(loss) 
-            # visualize(inputs, outputs, class_names)
-            break
+            #print(targets['boxes'].shape)
+            #print(outputs)
+            loss = criterion(outputs, targets['boxes'])
+            print(loss)
+            loss.backward()
+            if batch_idx == 200:
+                visualize(inputs, outputs, class_names)
+                break
     # path = '/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/frames/20200514/clip_0_1331/image_0110.jpg'
     # image = PIL.Image.open(path)
     # image.show()
