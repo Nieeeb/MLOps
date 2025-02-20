@@ -25,21 +25,71 @@ from util import non_max_suppression
 
 from nn import yolo_v8_n
 
-from Dataloading.coco import COCODataset
+from loss import YoloCriterion
 
+from Dataloading.coco import COCODataset
+import matplotlib.pyplot as plt
+
+from matplotlib import patches
+import numpy as np
 
 
 '''
 To-DO
--Fix YOLO så den tager 1-channel billeder
--Visualiser targets og outputs
--Ensure samme format af targets og outputs
+- Formatter outputs så der kan beregnes loss
+https://github.com/MarcoParola/conditioning-transformer.git
 '''
 
-@hydra.main(config_path="../../config", config_name="config")
-def main(args):
+def visualize(inputs: torch.Tensor, outputs: torch.Tensor, class_names: list):
+
+
+    inputs = inputs.squeeze(0).permute(1, 2, 0)
+    image = inputs.numpy()
+
+
+    outputs = outputs.permute(2, 0, 1)
+    pred = outputs[1267].squeeze()
+
+
+
+    pred_np = pred.detach().cpu().numpy()
+    cx, cy, w, h = pred_np[:4]
+    scores = pred_np[4:]
+    
+    # Determine the best scoring class
+    class_idx = np.argmax(scores)
+    score = scores[class_idx]
+    
+    # Convert the bounding box from center format (c_x, c_y, w, h)
+    # to top-left format (x, y, w, h) for plotting:
+    x = cx - w / 2
+    y = cy - h / 2
+    
+    # Create a plot
+    fig, ax = plt.subplots(1, figsize=(8, 8))
+    # If your image is in [0,1] range, you may want to multiply by 255:
+    if image.max() <= 1.0:
+        image_disp = (image * 255).astype(np.uint8)
+    else:
+        image_disp = image.astype(np.uint8)
+    ax.imshow(image_disp)
+    
+    # Create and add the rectangle patch for the bounding box
+    rect = patches.Rectangle((x, y), w, h, linewidth=2, edgecolor='red', facecolor='none')
+    ax.add_patch(rect)
+    
+    # Prepare a label text with the class name and confidence score
+    label = f"{class_names[class_idx]}: {score:.2f}"
+    ax.text(x, y - 5, label, color='red', fontsize=12, backgroundcolor='white')
+    
+    ax.axis('off')
+    plt.show()
+
+#@hydra.main(config_path="../../config", config_name="config")
+def main():
+    class_names = ['person',  'bicycle', 'motorcycle', 'vehicle']
     # Creating a model and defining number of classes
-    model = yolo_v8_n(num_classes=4).cuda()
+    model = yolo_v8_n(num_classes=4).cpu()
 
     #train_dataset, val_dataset, test_dataset = load_datasets(args)
     model.eval()
@@ -48,7 +98,7 @@ def main(args):
     object = 'Test.json'
     object_path = 'harborfrontv2/' + object
     output_path = 'outputs/' + object
-    stupid_patth = '/home/nieb/Projects/DAKI Mini Projects/MLOps/outputs/Test.json'
+    stupid_patth = '/home/xander/Documents/School/MLOps/outputs/Valid.json'
     train_dataset = COCODataset(root='', annotation=stupid_patth, numClass=4, online=True)
     train_loader = data.DataLoader(train_dataset, batch_size=1)
 
@@ -56,17 +106,17 @@ def main(args):
 
 
     epochs = 1
+    with open(os.path.abspath('/home/xander/Documents/School/MLOps/model/YoloV8/args.yaml')) as f:
+        params = yaml.safe_load(f)
 
+    criterion = YoloCriterion(params, model)
 
     for epoch in range(epochs):
         for batch_idx, (inputs, targets) in enumerate(train_loader):
-            inputs = inputs.squeeze(0)
-            pilled = F.to_pil_image(inputs)
-            image_gray = F.to_grayscale(pilled, num_output_channels=3)
-            image_gray.show()
-            print(targets)
             outputs = model(inputs)
-            print(outputs)
+            loss = criterion(outputs, targets)
+            print(loss) 
+            # visualize(inputs, outputs, class_names)
             break
     # path = '/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/frames/20200514/clip_0_1331/image_0110.jpg'
     # image = PIL.Image.open(path)

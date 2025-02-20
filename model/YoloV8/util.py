@@ -328,6 +328,13 @@ class ComputeLoss:
 
     def __call__(self, outputs, targets):
         x = outputs[1] if isinstance(outputs, tuple) else outputs
+        # print(i)
+        # print(type(i))
+        # print(x)
+        # print(type(x))
+        # print(self.no)
+        # print(type(self.no))
+        
         output = torch.cat([i.view(x[0].shape[0], self.no, -1) for i in x], 2)
         pred_output, pred_scores = output.split((4 * self.dfl_ch, self.nc), 1)
 
