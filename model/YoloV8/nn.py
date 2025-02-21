@@ -177,8 +177,31 @@ class Head(torch.nn.Module):
     def forward(self, x):
         for i in range(self.nl):
             x[i] = torch.cat((self.box[i](x[i]), self.cls[i](x[i])), 1)
+            print(f"Detection Layer 1 (High Resolution):\n"
+      f"Shape: {x[0].shape}\n"
+      f"Excerpt (first image, first channel, top-left 2x2):\n{x[0][0, 0, :1, :4]}\n"
+      "This grid (24x48) detects smaller objects with fine spatial detail.\n")
+
         if self.training:
+            detection_layer = x[0]
+
+            # Select one prediction from the grid.
+            # Here, we're taking the cell at row 0, column 0 for the first image.
+            single_prediction = detection_layer[0, :, 0, 0]  # shape: [68]
+
+            # Split the prediction into:
+            # - Box predictions: the first 64 values (16 channels * 4 values each)
+            # - Class scores: the remaining 4 values
+            box_predictions = single_prediction[:64]
+            class_scores = single_prediction[64:]
+
+            print("One prediction from Detection Layer 1 (High Resolution):")
+            print("Box Predictions (raw, 64 values):")
+            print(box_predictions)
+            print("\nClass Scores (raw logits, 4 values):")
+            print(class_scores)
             return x
+            
         self.anchors, self.strides = (x.transpose(0, 1) for x in make_anchors(x, self.stride, 0.5))
 
         x = torch.cat([i.view(x[0].shape[0], self.no, -1) for i in x], 2)
@@ -187,6 +210,9 @@ class Head(torch.nn.Module):
         a = self.anchors.unsqueeze(0) - a
         b = self.anchors.unsqueeze(0) + b
         box = torch.cat(((a + b) / 2, b - a), 1)
+        print("When in .eval() mode:")
+        print(f"Shape of tensor with box predictions: {box.shape}")
+        print(f"Shape of tensor with class probabilities for each box: {cls.sigmoid().shape}")
         return torch.cat((box * self.strides, cls.sigmoid()), 1)
 
     def initialize_biases(self):
@@ -212,8 +238,34 @@ class YOLO(torch.nn.Module):
         self.head.initialize_biases()
 
     def forward(self, x):
+        print(f"Image shape in forward function: {x.shape}")
         x = self.net(x)
+        p3, p4, p5 = x
+        print("\n")
+        print(f"""Output from DarkNet(x): 3 feature maps at different levels of abstractions.  
+                  Excerpt from p3 featuremap:", {p3[0, 0, :1, :2]}
+                        p3 shape is: {p3.shape}
+                  Excerpt from p4 featuremap:", {p4[0, 0, :1, :2]}
+                        p4 shape is: {p4.shape}
+                  Excerpt from p5 featuremap:", {p5[0, 0, :1, :2]}
+                        p5 shape is: {p5.shape}""")
+        print("\n")
         x = self.fpn(x)
+        h2, h4, h6 = x
+        print("\n")
+        print(f"""Output from DarkFPN(x): 3 feature maps at different abstactions, based on the feature maps from DarkNet.  
+                  Excerpt from h2 featuremap:", {h2[0, 0, :1, :2]}
+                        h2 shape is: {h2.shape}
+                  Excerpt from h4 featuremap:", {h4[0, 0, :1, :2]}
+                        h4 shape is: {h4.shape}
+                  Excerpt from h6 featuremap:", {h6[0, 0, :1, :2]}
+                        h6 shape is: {h6.shape}
+""")
+        print("\n")
+
+        # print(self.head(list(x)))
+        
+        # print(x)
         return self.head(list(x))
 
     def fuse(self):

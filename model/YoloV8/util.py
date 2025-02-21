@@ -328,32 +328,12 @@ class ComputeLoss:
 
     def __call__(self, outputs, targets):
         x = outputs[1] if isinstance(outputs, tuple) else outputs
-        # print(type(x))
-        # print(i)
-        # print(type(i))
-        # print(x)
-        # print(type(x))
-        # print(self.no)
-        # print(type(self.no))
         
         output = torch.cat([i.view(x[0].shape[0], self.no, -1) for i in x], 2)
-        # print(type(output))
-        # print(output.shape)
         pred_output, pred_scores = output.split((4 * self.dfl_ch, self.nc), 1)
-        # print(pred_output.shape)
-        # for i in range(10):
-        #     print(pred_output[0][0][i])
-        # print(pred_scores.shape)
-        # print(pred_scores[0][0][0])
 
         pred_output = pred_output.permute(0, 2, 1).contiguous()
         pred_scores = pred_scores.permute(0, 2, 1).contiguous()
-
-        # print(pred_output)
-        # print(pred_output.shape)
-        
-        # print(pred_scores)
-        # print(pred_scores.shape)
 
         size = torch.tensor(x[0].shape[2:], dtype=pred_scores.dtype, device=self.device)
         size = size * self.stride[0]
