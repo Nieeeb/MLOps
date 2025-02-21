@@ -3,7 +3,7 @@ import json
 from tqdm import tqdm
 
 def main():
-    val_file = r'/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/Valid.json'
+    val_file = r'/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/Train.json'
     images_df = pd.DataFrame()
     annotations_df = pd.DataFrame
     with open(val_file) as json_data:
@@ -11,6 +11,7 @@ def main():
         images_df = pd.DataFrame(data['images'])
         annotations_df = pd.DataFrame(data['annotations'])
         json_data.close()
+    print(len(annotations_df))
     print(images_df.columns)
     print(annotations_df.columns)
 

@@ -328,6 +328,7 @@ class ComputeLoss:
 
     def __call__(self, outputs, targets):
         x = outputs[1] if isinstance(outputs, tuple) else outputs
+        # print(type(x))
         # print(i)
         # print(type(i))
         # print(x)
@@ -336,23 +337,39 @@ class ComputeLoss:
         # print(type(self.no))
         
         output = torch.cat([i.view(x[0].shape[0], self.no, -1) for i in x], 2)
+        # print(type(output))
+        # print(output.shape)
         pred_output, pred_scores = output.split((4 * self.dfl_ch, self.nc), 1)
+        # print(pred_output.shape)
+        # for i in range(10):
+        #     print(pred_output[0][0][i])
+        # print(pred_scores.shape)
+        # print(pred_scores[0][0][0])
 
         pred_output = pred_output.permute(0, 2, 1).contiguous()
         pred_scores = pred_scores.permute(0, 2, 1).contiguous()
+
+        # print(pred_output)
+        # print(pred_output.shape)
+        
+        # print(pred_scores)
+        # print(pred_scores.shape)
 
         size = torch.tensor(x[0].shape[2:], dtype=pred_scores.dtype, device=self.device)
         size = size * self.stride[0]
 
         anchor_points, stride_tensor = make_anchors(x, self.stride, 0.5)
 
+
         # targets
         if targets.shape[0] == 0:
             gt = torch.zeros(pred_scores.shape[0], 0, 5, device=self.device)
         else:
             i = targets[:, 0]  # image index
+            # print(i)
             _, counts = i.unique(return_counts=True)
             gt = torch.zeros(pred_scores.shape[0], counts.max(), 5, device=self.device)
+            print(gt)
             for j in range(pred_scores.shape[0]):
                 matches = i == j
                 n = matches.sum()

@@ -111,8 +111,8 @@ def main():
     with open(os.path.abspath('/home/nieb/Projects/DAKI Mini Projects/MLOps/model/YoloV8/args.yaml')) as f:
         params = yaml.safe_load(f)
 
-    #criterion = YoloCriterion(params, model)
-    criterion = ComputeLoss(model, params) # Loss fra yolo github virker, men giver infinite loss. Umiddelbart fordi targets er forkert format
+    criterion = YoloCriterion(params, model)
+    # criterion = ComputeLoss(model, params) # Loss fra yolo github virker, men giver infinite loss. Umiddelbart fordi targets er forkert format
 
     for epoch in range(epochs):
         for batch_idx, (inputs, targets) in enumerate(train_loader):
@@ -120,10 +120,14 @@ def main():
             inputs = inputs.cuda()
             #targets = targets.cuda()
             outputs = model(inputs)
-            #print(targets['boxes'].shape)
-            #print(outputs)
-            loss = criterion(outputs, targets['boxes'])
-            print(loss)
+            #print(targets['boxes'])
+            #print(targets['labels'])
+            #print(outputs[0].shape)
+            #cattarget = torch.cat((targets['boxes'], targets['labels']), 1)
+            loss = criterion(outputs, targets)
+            print(loss.items())
+            break
+            #print(loss)
             loss.backward()
             if batch_idx == 200:
                 visualize(inputs, outputs, class_names)
