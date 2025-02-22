@@ -26,14 +26,16 @@ from util import non_max_suppression
 from nn import yolo_v8_n
 
 from loss import YoloCriterion
+from PIL import Image, ImageDraw
 
-from Dataloading.coco import COCODataset
+from Dataloading.coco import COCODataset, collateFunction
 import matplotlib.pyplot as plt
 
 from matplotlib import patches
 import numpy as np
 
 from model.YoloV8.util import ComputeLoss
+from torch.optim import Adam
 
 
 '''
@@ -54,7 +56,7 @@ def visualize(inputs: torch.Tensor, outputs: torch.Tensor, class_names: list):
 
 
 
-    pred_np = pred.detach().cpu().numpy()
+    pred_np = pred.detach().cuda().numpy()
     cx, cy, w, h = pred_np[:4]
     scores = pred_np[4:]
     
@@ -89,84 +91,131 @@ def visualize(inputs: torch.Tensor, outputs: torch.Tensor, class_names: list):
 
 def print_tensor_as_float(tensor, precision=6):
     # Detach tensor and convert to numpy
-    np_arr = tensor.detach().cpu().numpy()
+    np_arr = tensor.detach().cuda().numpy()
     # Create a formatter that prints floats with the desired precision
     formatter = {'float_kind': lambda x: format(x, f'.{precision}f')}
     formatted = np.array2string(np_arr, formatter=formatter)
     print(formatted)
 
 
+def targets_to_tensor(targets):
+    """
+    Converts a tuple of dictionaries (each with keys 'boxes' and 'labels') into a single tensor.
+    Each output row is: [batch_index, x1, y1, x2, y2, label]
+    
+    Args:
+        targets (tuple): Tuple of dictionaries. Each dictionary must contain:
+                         - 'boxes': tensor of shape [num_boxes, 4]
+                         - 'labels': tensor of shape [num_boxes]
+                         
+    Returns:
+        Tensor: A tensor of shape [total_num_boxes, 6] containing the batch index, box coordinates, and label.
+    """
+    target_list = []
+    for batch_idx, target in enumerate(targets):
+        boxes = target['boxes']  # shape: [num_boxes, 4]
+        labels = target['labels']  # shape: [num_boxes]
+        # Create a tensor filled with the batch index for each box
+        batch_indices = torch.full((boxes.shape[0], 1), batch_idx, dtype=boxes.dtype, device=boxes.device)
+        # Concatenate batch index, boxes, and labels (unsqueeze labels to make it [num_boxes, 1])
+        target_with_idx = torch.cat([batch_indices, boxes, labels.unsqueeze(1)], dim=1)
+        target_list.append(target_with_idx)
+    
+    # Concatenate all targets along the first dimension
+    return torch.cat(target_list, dim=0)
+
 #@hydra.main(config_path="../../config", config_name="config")
 def main():
     class_names = ['person',  'bicycle', 'motorcycle', 'vehicle']
     # Creating a model and defining number of classes
-    print("----------------------")
-    model = yolo_v8_n(num_classes=4).cpu()
-    print("IGNORE THIS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    model = yolo_v8_n(num_classes=4).cuda()
     #train_dataset, val_dataset, test_dataset = load_datasets(args)
     # model.eval()
-
+    #torch.manual_seed(334454)
 
     object = 'Test.json'
     object_path = 'harborfrontv2/' + object
     output_path = 'outputs/' + object
-    stupid_patth = r'C:\Users\Victor Steinrud\Documents\DAKI\4. Semester\Drift af AI\MLOps\outputs\Valid.json'
-    train_dataset = COCODataset(root='', annotation=stupid_patth, numClass=4, online=True)
-    train_loader = data.DataLoader(train_dataset, batch_size=1)
+    stupid_patth = r'/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/Valid.json'
+    data_dir = r'/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/'
+    train_dataset = COCODataset(root=data_dir, annotation=stupid_patth, numClass=4)
+    train_loader = data.DataLoader(train_dataset, batch_size=1, collate_fn=collateFunction)
 
 
 
 
     epochs = 1
-    with open(os.path.abspath(r'C:\Users\Victor Steinrud\Documents\DAKI\4. Semester\Drift af AI\MLOps\model\YoloV8\args.yaml')) as f:
+    with open(os.path.abspath(r'/home/nieb/Projects/DAKI Mini Projects/MLOps/model/YoloV8/args.yaml')) as f:
         params = yaml.safe_load(f)
-
-    criterion = YoloCriterion(params, model)
-    # criterion = ComputeLoss(model, params) # Loss fra yolo github virker, men giver infinite loss. Umiddelbart fordi targets er forkert format
+    optimizer = Adam(model.parameters(), lr=0.001)
+    #criterion = YoloCriterion(params, model)
+    criterion = ComputeLoss(model, params) # Loss fra yolo github virker, men giver infinite loss. Umiddelbart fordi targets er forkert format
     model.train()
     for epoch in range(epochs):
         for batch_idx, (inputs, targets) in enumerate(train_loader):
-            # model.train()
-            inputs = inputs.cpu()
-            #targets = targets.cuda()
-            print(f"Image shape: {inputs.shape}")
+            optimizer.zero_grad()
+            targets = targets_to_tensor(targets)
+            inputs = inputs.cuda()
+            targets = targets.cuda()
             outputs = model(inputs)
-      
-            # print_tensor_as_float(outputs[0, :, 100])
-            # print(outputs[0, :, 100])
-            break
-            #print(targets['boxes'])
-            #print(targets['labels'])
-            #print(outputs[0].shape)
-            #cattarget = torch.cat((targets['boxes'], targets['labels']), 1)
-            loss = criterion(outputs, targets)
-            print(loss.items())
-            break
-            #print(loss)
-            loss.backward()
-            if batch_idx == 200:
-                visualize(inputs, outputs, class_names)
+            if batch_idx >=119 and batch_idx <= 121:
+                print(outputs)
+                print(f" targets: {targets}")
+            if batch_idx > 0:
+                loss = criterion(outputs, targets, batch_idx) 
+
+                loss.backward()
+            
+                optimizer.step()
+
+                if batch_idx % 10 == 0:
+                    print(f"batch: {batch_idx}: {loss.item()}")
+            # if batch_idx == 120:
+            #     print(targets)
+            #     print(f"For batch: {batch_idx}, loss is: {loss.item()}")
+            # if batch_idx > 130:
+            #     break
+            # if batch_idx == 200:
+            #     visualize(inputs, outputs, class_names)
+
+            """
+            if batch_idx == 120:
+                img_tensor = inputs.squeeze(0).squeeze(0)
+                # Scale values to [0, 255] and convert to uint8
+                img_tensor = (img_tensor * 255).clamp(0, 255).to(torch.uint8)
+                # Convert to NumPy array and create a PIL image in grayscale mode ('L')
+                np_img = img_tensor.cpu().numpy()
+                pil_img = Image.fromarray(np_img, mode='L')
+
+                # --- Define your bounding boxes and labels ---
+                # Your provided data as a tuple with a dictionary inside:
+                bboxes_data = targets
+                # --- Convert normalized bbox coordinates to pixel coordinates and draw ---
+                # Get image dimensions
+                img_width, img_height = 384, 288 
+
+                draw = ImageDraw.Draw(pil_img)
+
+                # Loop over each bbox and its label
+                for box, label in zip(bboxes_data[0]['boxes'], bboxes_data[0]['labels']):
+                    # Assuming box format: [center_x, center_y, width, height] in normalized coordinates (0 to 1)
+                    cx, cy, w, h = box.tolist()
+                    
+                    # Convert to pixel coordinates:
+                    x_min = (cx - w/2) * img_width
+                    y_min = (cy - h/2) * img_height
+                    x_max = (cx + w/2) * img_width
+                    y_max = (cy + h/2) * img_height
+
+                    # Draw rectangle with red outline
+                    draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=2)
+                    # Optionally, draw the label as text (in yellow) at the top-left corner of the box
+                    draw.text((x_min, y_min), str(label.item()), fill="yellow")
+
+                # Display the final image with boxes drawn on it
+                pil_img.show()
                 break
-    # path = '/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/frames/20200514/clip_0_1331/image_0110.jpg'
-    # image = PIL.Image.open(path)
-    # image.show()
-    # Image is 1 color channel, here we convert to 3 color channels. Should probably change model input dim instead
-
-    # tensor = F.to_tensor(image_gray).cuda()
-    # # Add batch dimension
-    # tensor = tensor.unsqueeze(0)
-    # print(tensor.shape)
-
-    # Forward pass through the model
-    # prediction = model(tensor)
-    # Built in function to remove some of the overlapping boxes
-    # prediction = non_max_suppression(prediction, 0.001, 0.65)
-    #for idx in range(prediction[0].shape[1]):
-    #    print(prediction[0][idx])
-    
-    # Right now, current problems are:
-    # Dont know what the output consists off. What is in each tensor dimension?
-    # Do we need to scale output boxes to fit the image?
+            """
 
     
 

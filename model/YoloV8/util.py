@@ -326,8 +326,9 @@ class ComputeLoss:
         self.dfl_ch = m.dfl.ch
         self.project = torch.arange(self.dfl_ch, dtype=torch.float, device=device)
 
-    def __call__(self, outputs, targets):
+    def __call__(self, outputs, targets, batch_idx):
         x = outputs[1] if isinstance(outputs, tuple) else outputs
+        #print(f"Input to the loss function: {x}")
         
         output = torch.cat([i.view(x[0].shape[0], self.no, -1) for i in x], 2)
         pred_output, pred_scores = output.split((4 * self.dfl_ch, self.nc), 1)
@@ -345,69 +346,196 @@ class ComputeLoss:
         if targets.shape[0] == 0:
             gt = torch.zeros(pred_scores.shape[0], 0, 5, device=self.device)
         else:
-            i = targets[:, 0]  # image index
-            # print(i)
+            i = targets[:, 0].long() # image index
+
             _, counts = i.unique(return_counts=True)
             gt = torch.zeros(pred_scores.shape[0], counts.max(), 5, device=self.device)
-            print(gt)
+            
             for j in range(pred_scores.shape[0]):
+
                 matches = i == j
+
                 n = matches.sum()
+    
                 if n:
                     gt[j, :n] = targets[matches, 1:]
-            gt[..., 1:5] = wh2xy(gt[..., 1:5].mul_(size[[1, 0, 1, 0]]))
 
-        gt_labels, gt_bboxes = gt.split((1, 4), 2)  # cls, xyxy
+            gt[..., 0:4] = wh2xy(gt[..., 0:4].mul_(size[[1, 0, 1, 0]]))
+
+        gt = gt[..., [4, 0, 1, 2, 3]]
+        gt_labels, gt_bboxes = gt.split((1, 4), 2)
+
+
         mask_gt = gt_bboxes.sum(2, keepdim=True).gt_(0)
-
+        # ALT ER GOOD HERTIL
         # boxes
         b, a, c = pred_output.shape
+        """
+        pred_output har alle bbox predictions og består af 64 tal pr. prediction
+        b, a, c = batch_size, num_prediction, antal tal i én prediction
+        """
+        
         pred_bboxes = pred_output.view(b, a, 4, c // 4).softmax(3)
+        """
+        den konverterer de 64 predictions fra logits til probabilities
+        """
         pred_bboxes = pred_bboxes.matmul(self.project.type(pred_bboxes.dtype))
+        """
+        Konverterer de 16 tal 4 bbox coordinates
+        Så der er 4 coords pr. prediction
+        De 4 tal er et resultat af matrix multiplication på de 16 probabilites
+        Dvs at de 4 tal representerer hvad den var mest sikker på
+        shape: torch.Size([1, 1512, 4])
+        """
 
         a, b = torch.split(pred_bboxes, 2, -1)
         pred_bboxes = torch.cat((anchor_points - a, anchor_points + b), -1)
+        
+        """
+        a fortæller hvor langt væk top-left er fra anchor point
+        b fortæller hvor langt væk bottom-right er fra anchor point
+        pred_bboxes er relativt til størelsen af feature map
+        anchor points er midten af den grid cell som den givne prediction er lavet i
+        """
 
         scores = pred_scores.detach().sigmoid()
+        """
+        Den konverterer class probabilities fra outputs med sigmoid
+        shape: torch.Size([1, 1512, 4])
+        """
         bboxes = (pred_bboxes.detach() * stride_tensor).type(gt_bboxes.dtype)
+
+        """
+        bboxes skal ikke bruges til at beregne loss da de bliver detatched fra gradients
+        coordinates bliver skaleret så de matcher input billedets størelse
+        """
+
         target_bboxes, target_scores, fg_mask = self.assign(scores, bboxes,
                                                             gt_labels, gt_bboxes, mask_gt,
-                                                            anchor_points * stride_tensor)
+                                                            anchor_points * stride_tensor, batch_idx)
 
+        """
+        Finder target til en given prediction
+        Herved ved man hvilken target der skal beregnes loss via
+        fg_mask fortæller os hvilke predictions der skal bruges til at beregne loss 
+        """
         target_bboxes /= stride_tensor
-        target_scores_sum = target_scores.sum()
+        
 
+        """
+        returnerer target_bboxes til det format som pred_bboxes er i
+        pred_bboxes er nemlig ikke detached fra gradients
+        """
+
+        target_scores_sum = target_scores.sum()
+        """
+        Giver os en skalar vi kan normalisere loss med
+        Hvis vi ikke gjorde det ville loss stige afhængigt af hvor mange object der er i billedet
+
+        Target_scores_sum er IKKE int
+        Det er fordi at den onehot ecnodede vector med target scores
+        --bliver pr. positiv prediction ganget med den givne predictions allignement metric
+
+        Dette medfører at jo dårligere allignement en positiv prediction har
+        jo lavere vil target_scores_sum/normalisering faktoren være
+
+        eg. dårlige predictions giver højere loss 
+        """
+
+        # if target_scores.sum().item() < 0.5:
+        #     return None
+
+        # if batch_idx == 119 or batch_idx == 120:
+        #     print(pred_scores.sum())
+        #     print(target_scores.sum().item())
         # cls loss
         loss_cls = self.bce(pred_scores, target_scores.to(pred_scores.dtype))
         loss_cls = loss_cls.sum() / target_scores_sum
 
+        """
+        Der bliver beregnet BCE loss
+        Dvs loss for class probabilites
+
+        BCE loss bliver summeret for alle positive predictions 
+        --og derefter skaleret med normaliseringsfaktoren
+        """
+
         # box loss
         loss_box = torch.zeros(1, device=self.device)
         loss_dfl = torch.zeros(1, device=self.device)
+        """
+        instantierer tomme tensors som skal bruges til box og dfl loss beregning
+        """
+
         if fg_mask.sum():
             # IoU loss
             weight = torch.masked_select(target_scores.sum(-1), fg_mask).unsqueeze(-1)
+
+            """
+            Weight er en tensor der viser hver predictions confidence/quality 
+            Derved bliver box loss skaleret med hvor sikker den er på sin prediction
+            """
             loss_box = self.iou(pred_bboxes[fg_mask], target_bboxes[fg_mask])
+
+            """
+            her får vi en tensor som har IoU value for hver prediction
+            """
+
             loss_box = ((1.0 - loss_box) * weight).sum() / target_scores_sum
+            """
+            IoU bliver minusset med 1 og derefter ganget med den confidence/weight
+            Det bliver summeret for alle positive predictions og skaleret med
+            --normaliseringsfaktoren
+            """
             # DFL loss
             a, b = torch.split(target_bboxes, 2, -1)
+            """
+            Her bliver target boxes splittet i top-left og bottem-right from anchorpoint
+            """
+
             target_lt_rb = torch.cat((anchor_points - a, b - anchor_points), -1)
+            """
+            Her bliver target bbox beregnet ud fra den givne predictions anchor point 
+            Idéen er at target bbox bliver i samme koordinatsystem som pred
+            target_lt_rb er de korrekte offsets fra anchor points
+            """
+
             target_lt_rb = target_lt_rb.clamp(0, self.dfl_ch - 1.01)  # distance (left_top, right_bottom)
+            """
+            Her bliver offsets clampet mellem 0 og antal discrete bins der er i billedet
+            """
             loss_dfl = self.df_loss(pred_output[fg_mask].view(-1, self.dfl_ch), target_lt_rb[fg_mask])
+
+            """
+            beregner loss baseret på hvor gode offsets pred_output har
+            """
             loss_dfl = (loss_dfl * weight).sum() / target_scores_sum
+
 
         loss_cls *= self.params['cls']
         loss_box *= self.params['box']
         loss_dfl *= self.params['dfl']
+        
+        # print(f"cls loss: {loss_cls}")
+        # print(f"box loss: {loss_box}")
+        # print(f"dfl loss: {loss_dfl}")
         return loss_cls + loss_box + loss_dfl  # loss(cls, box, dfl)
 
     @torch.no_grad()
-    def assign(self, pred_scores, pred_bboxes, true_labels, true_bboxes, true_mask, anchors):
+    def assign(self, pred_scores, pred_bboxes, true_labels, true_bboxes, true_mask, anchors, batch_idx):
         """
         Task-aligned One-stage Object Detection assigner
         """
         self.bs = pred_scores.size(0)
         self.num_max_boxes = true_bboxes.size(1)
+
+
+
+
+        observed_batch = 300
+
+
+
 
         if self.num_max_boxes == 0:
             device = true_bboxes.device
@@ -422,15 +550,30 @@ class ComputeLoss:
         i[1] = true_labels.long().squeeze(-1)
 
         overlaps = self.iou(true_bboxes.unsqueeze(2), pred_bboxes.unsqueeze(1))
+        if batch_idx == observed_batch:
+            print(f"amount of overlaps {overlaps.sum()}")
         overlaps = overlaps.squeeze(3).clamp(0)
         align_metric = pred_scores[i[0], :, i[1]].pow(self.alpha) * overlaps.pow(self.beta)
+        if batch_idx == observed_batch:
+            print(f"align metric {align_metric.sum()}")
+        
         bs, n_boxes, _ = true_bboxes.shape
         lt, rb = true_bboxes.view(-1, 1, 4).chunk(2, 2)  # left-top, right-bottom
         bbox_deltas = torch.cat((anchors[None] - lt, rb - anchors[None]), dim=2)
+        if batch_idx == observed_batch:
+            print(f"bbox deltas {bbox_deltas.sum()}")
         mask_in_gts = bbox_deltas.view(bs, n_boxes, anchors.shape[0], -1).amin(3).gt_(1e-9)
+        if batch_idx == observed_batch:
+            print(f"mask in gt {mask_in_gts.sum()}")
         metrics = align_metric * mask_in_gts
+        
+        
         top_k_mask = true_mask.repeat([1, 1, self.top_k]).bool()
+        if batch_idx == observed_batch:
+            print(f"top k mask {top_k_mask}")
         num_anchors = metrics.shape[-1]
+        if batch_idx == observed_batch:
+            print(f"num anchors {num_anchors}")
         top_k_metrics, top_k_indices = torch.topk(metrics, self.top_k, dim=-1, largest=True)
         if top_k_mask is None:
             top_k_mask = (top_k_metrics.max(-1, keepdim=True) > self.eps).tile([1, 1, self.top_k])
@@ -469,13 +612,33 @@ class ComputeLoss:
         fg_scores_mask = fg_mask[:, :, None].repeat(1, 1, self.nc)
         target_scores = torch.where(fg_scores_mask > 0, target_scores, 0)
 
+
+
+
+        # observed_batch = 119
+
+
+        # if batch_idx == observed_batch:
+        #     print(f"Target score before normalization: {target_scores.sum()}")
+        # if batch_idx == observed_batch:
+        #     print(f"Align metric: {align_metric.sum()}")
         # normalize
         align_metric *= mask_pos
         pos_align_metrics = align_metric.amax(axis=-1, keepdim=True)
+        # if batch_idx == observed_batch:
+        #     print(f"position alignment metrics: {pos_align_metrics.sum()}")
         pos_overlaps = (overlaps * mask_pos).amax(axis=-1, keepdim=True)
+        # if batch_idx == observed_batch:
+        #     print(f"num overlaps: {overlaps.sum()}")
+        #     print(f"mask pos {mask_pos}")
+            # print(f"Amount of positional overlaps: {pos_overlaps.sum()}")
         norm_align_metric = (align_metric * pos_overlaps / (pos_align_metrics + self.eps)).amax(-2)
         norm_align_metric = norm_align_metric.unsqueeze(-1)
+        # if batch_idx == observed_batch:
+        #     print(f"norm_align_metric: {norm_align_metric.sum()}")
         target_scores = target_scores * norm_align_metric
+        # if batch_idx == observed_batch:
+            # print(f"Target score after normalization: {target_scores.sum()}")
 
         return target_bboxes, target_scores, fg_mask.bool()
 

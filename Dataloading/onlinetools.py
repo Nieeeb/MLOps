@@ -18,7 +18,7 @@ import io
 # File must contain: {"endpoint": "xxx", "bucket": "xxx", "username": "xxx", "password": "xxx"}
 def load_credentials() -> Dict[str, str]:
     path = r'secrets/credentials.json'
-    stupid_path = r'C:\Users\Victor Steinrud\Documents\DAKI\4. Semester\Drift af AI\MLOps\secrets\credentials.json'
+    stupid_path = r'/home/nieb/Projects/DAKI Mini Projects/MLOps/secrets/credentials.json'
     assert os.path.exists(stupid_path)
     
     credentials = None
