@@ -367,6 +367,8 @@ class ComputeLoss:
 
 
         mask_gt = gt_bboxes.sum(2, keepdim=True).gt_(0)
+        #print(gt_bboxes)
+        #print(mask_gt)
         # ALT ER GOOD HERTIL
         # boxes
         b, a, c = pred_output.shape
@@ -426,8 +428,9 @@ class ComputeLoss:
         returnerer target_bboxes til det format som pred_bboxes er i
         pred_bboxes er nemlig ikke detached fra gradients
         """
-
-        target_scores_sum = target_scores.sum()
+        #target_scores_sum= len(target_scores)
+        target_scores_sum = max(target_scores.sum(), 1)
+        #target_scores_sum = target_scores.sum() # Original
         """
         Giver os en skalar vi kan normalisere loss med
         Hvis vi ikke gjorde det ville loss stige afhængigt af hvor mange object der er i billedet
@@ -450,7 +453,8 @@ class ComputeLoss:
         #     print(target_scores.sum().item())
         # cls loss
         loss_cls = self.bce(pred_scores, target_scores.to(pred_scores.dtype))
-        loss_cls = loss_cls.sum() / target_scores_sum
+        #print(f"Target score sum: {target_scores_sum}")
+        loss_cls = loss_cls.sum() / (target_scores_sum + 0.00000000001)
 
         """
         Der bliver beregnet BCE loss
@@ -516,10 +520,10 @@ class ComputeLoss:
         loss_box *= self.params['box']
         loss_dfl *= self.params['dfl']
         
-        # print(f"cls loss: {loss_cls}")
-        # print(f"box loss: {loss_box}")
-        # print(f"dfl loss: {loss_dfl}")
-        return loss_cls + loss_box + loss_dfl  # loss(cls, box, dfl)
+        #print(f"cls loss: {loss_cls}")
+        #print(f"box loss: {loss_box}")
+        #print(f"dfl loss: {loss_dfl}")
+        return loss_cls + loss_box + loss_dfl, (loss_cls, loss_box, loss_dfl)  # loss(cls, box, dfl)
 
     @torch.no_grad()
     def assign(self, pred_scores, pred_bboxes, true_labels, true_bboxes, true_mask, anchors, batch_idx):
@@ -530,7 +534,7 @@ class ComputeLoss:
         self.num_max_boxes = true_bboxes.size(1)
 
 
-
+        #print(true_mask)
 
         observed_batch = 300
 

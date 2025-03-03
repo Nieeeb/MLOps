@@ -37,6 +37,8 @@ import numpy as np
 from model.YoloV8.util import ComputeLoss
 from torch.optim import Adam
 
+from ultraloss import v8DetectionLoss
+
 
 '''
 To-DO
@@ -120,9 +122,20 @@ def targets_to_tensor(targets):
         # Concatenate batch index, boxes, and labels (unsqueeze labels to make it [num_boxes, 1])
         target_with_idx = torch.cat([batch_indices, boxes, labels.unsqueeze(1)], dim=1)
         target_list.append(target_with_idx)
+        #print(target_with_idx)
     
     # Concatenate all targets along the first dimension
     return torch.cat(target_list, dim=0)
+
+def targets_to_ultra_tensor(targets):
+    target_batch = []
+    for batch_idx, target in enumerate(targets):
+        boxes = target['boxes']  # shape: [num_boxes, 4]
+        boxes = boxes.unsqueeze(0)
+        print(boxes[0])
+        labels = target['labels']  # shape: [num_boxes]
+        labels = labels.unsqueeze(0)
+        print(labels.shape)
 
 #@hydra.main(config_path="../../config", config_name="config")
 def main():
@@ -139,22 +152,27 @@ def main():
     stupid_patth = r'/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/Valid.json'
     data_dir = r'/home/nieb/Projects/Big Data/Images/Seasons_drift/v2/harborfrontv2/'
     train_dataset = COCODataset(root=data_dir, annotation=stupid_patth, numClass=4)
-    train_loader = data.DataLoader(train_dataset, batch_size=1, collate_fn=collateFunction)
+    train_loader = data.DataLoader(train_dataset, batch_size=16, collate_fn=collateFunction)
 
 
 
 
-    epochs = 1
+    epochs = 10
     with open(os.path.abspath(r'/home/nieb/Projects/DAKI Mini Projects/MLOps/model/YoloV8/args.yaml')) as f:
         params = yaml.safe_load(f)
     optimizer = Adam(model.parameters(), lr=0.001)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
     #criterion = YoloCriterion(params, model)
-    criterion = ComputeLoss(model, params) # Loss fra yolo github virker, men giver infinite loss. Umiddelbart fordi targets er forkert format
+    #criterion = ComputeLoss(model, params) # Loss fra yolo github virker, men giver infinite loss. Umiddelbart fordi targets er forkert format
+    criterion = v8DetectionLoss(model, params)
     model.train()
+    
+    epochlosses = []
     for epoch in range(epochs):
         for batch_idx, (inputs, targets) in enumerate(train_loader):
             optimizer.zero_grad()
-            targets = targets_to_tensor(targets)
+            #targets = targets_to_tensor(targets)
+            targets = targets_to_ultra_tensor(targets)
             inputs = inputs.cuda()
             targets = targets.cuda()
             outputs = model(inputs)
@@ -162,14 +180,18 @@ def main():
                 print(outputs)
                 print(f" targets: {targets}")
             if batch_idx > 0:
-                loss = criterion(outputs, targets, batch_idx) 
+                #loss, losses = criterion(outputs, targets, batch_idx) 
+                print(targets.shape)
+                loss = criterion(outputs, targets)
 
                 loss.backward()
             
                 optimizer.step()
+                scheduler.step()
 
                 if batch_idx % 10 == 0:
-                    print(f"batch: {batch_idx}: {loss.item()}")
+                    print(f"batch: {batch_idx}/{len(train_loader)}: {loss.item()}")
+                    #print(f"cls: {losses[0]}, box: {losses[1]}, dfl: {losses[2]}")
             # if batch_idx == 120:
             #     print(targets)
             #     print(f"For batch: {batch_idx}, loss is: {loss.item()}")
@@ -216,6 +238,8 @@ def main():
                 pil_img.show()
                 break
             """
+        epochlosses.append(loss)
+    print(epochlosses)
 
     
 
