@@ -197,8 +197,3 @@ cython_debug/
 
 # git should ignore the data folder, as its too big to push
 Data/
-
-
-
-# git should ingore the weights folder, as its too big to push
-Weights/
