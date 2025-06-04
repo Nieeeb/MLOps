@@ -59,8 +59,8 @@ This project is licensed under the [MIT License](LICENSE).
 
 For questions or feedback, reach out via:
 - Email: 
-    xschmi23@student.aau.dk
-    vstein23@student.aau.dk
+    xschmi23@student.aau.dk,
+    vstein23@student.aau.dk,
     wniebo22@student.aau.dk
 
 - Issues: [GitHub Issues](https://github.com/your-username/your-repo/issues)
