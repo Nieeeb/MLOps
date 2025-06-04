@@ -1,0 +1,9 @@
+#TODO
+#Data: hvordan vil vi definere dette??
+
+#Model. skal vi kunne definere forskellige archs?
+
+# Training Parameters
+batch_size: 50    # Batch size per GPU
+lr: 0.001         # Learning rate
+
