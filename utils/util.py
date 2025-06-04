@@ -8,7 +8,7 @@ import torchvision
 
 
 def load_params():
-    with open(r"configs\params.yaml") as config:
+    with open("configs/params.yaml") as config:
         try:
             params = yaml.safe_load(config)
         except yaml.YAMLError as exc:

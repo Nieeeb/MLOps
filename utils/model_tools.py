@@ -13,17 +13,19 @@ def load_model(
     If `checkpoint` is provided, load model weights from that file.
     The model is set to training mode by default unless `train=False`.
     """
-    model = Net()
+    
+    checkpoint_path = Path(checkpoint)
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(checkpoint_path)
 
-    if checkpoint:
-        model = torch.load(checkpoint)
-        
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model.to(device)
+    # 1. read the file → dict
+    ckpt = torch.load(checkpoint_path, map_location=device)
 
-    if train:
-        model.train()
-    else:
-        model.eval()
+    # 2. rebuild architecture and fill in weights
+    model = Net().to(device)
+    model.load_state_dict(ckpt["model"])        # <─ no second torch.load!
 
+    # 3. set mode
+    model.train(mode=train)
     return model
