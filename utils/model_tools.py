@@ -8,7 +8,7 @@ def load_model(
         train: bool=True,
         checkpoint: str | Path | None = None, 
 ) -> nn.Module:
-    """Return a `Net` model on the available device.
+    """Return a Net model on the available device.
 
     If `checkpoint` is provided, load model weights from that file.
     The model is set to training mode by default unless `train=False`.
@@ -25,5 +25,5 @@ def load_model(
         model.train()
     else:
         model.eval()
-        
+
     return model

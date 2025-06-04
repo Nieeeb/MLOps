@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 from torch.utils import data
 import torch
+import torchvision.transforms as transforms
+
 
 def download_cifar10(path: str = "Data/CIFAR10"):
     if not Path(path).exists():
@@ -31,7 +33,7 @@ def check_path(path: str) -> bool:
     else:
         return False
 
-def prepare_cifar10_loaders(batch_size: int = 50, data_path: str = "Data/CIFAR10", shuffle: bool = True) -> tuple[data.DataLoader, data.DataLoader, data.DataLoader]:
+def prepare_cifar10_loaders(batch_size: int = 50, num_workers: int = 2, data_path: str = "Data/CIFAR10", shuffle: bool = True) -> tuple[data.DataLoader, data.DataLoader, data.DataLoader]:
     setup_seed()
     # Check if data has been downloaded already
     if check_path(data_path) == False:
@@ -40,32 +42,45 @@ def prepare_cifar10_loaders(batch_size: int = 50, data_path: str = "Data/CIFAR10
     train_path = os.path.join(data_path, 'train')
     test_path = os.path.join(data_path, 'test')
     
-    train_data = CIFAR10(root = train_path,
-                    train = True,
-                    download = False
+
+
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+
+    train_data = CIFAR10(root=train_path,
+                    train=True,
+                    download=False,
+                    transform=transform
                     )
     
     generator = torch.Generator().manual_seed(0)
     train_data, valid_data = data.random_split(train_data, lengths=[40000, 10000], generator=generator)
     
-    test_data = CIFAR10(root = test_path,
-                    train = False,
-                    download=False
+    test_data = CIFAR10(root=test_path,
+                    train=False,
+                    download=False,
+                    transform=transform
                     )
-    
+
+
     train_loader = data.DataLoader(train_data,
                                     batch_size=batch_size,
-                                    shuffle=shuffle
+                                    shuffle=shuffle,
+                                    num_workers=num_workers,
                                     )
     
     valid_loader = data.DataLoader(valid_data,
                                     batch_size=batch_size,
-                                    shuffle=shuffle
+                                    shuffle=shuffle,
+                                    num_workers=num_workers
                                     )
     
     test_loader = data.DataLoader(test_data,
                                     batch_size=batch_size,
-                                    shuffle=shuffle
+                                    shuffle=shuffle,
+                                    num_workers=num_workers
                                     )
     
     return train_loader, valid_loader, test_loader
