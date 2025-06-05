@@ -19,6 +19,7 @@ def train(
     valid_loader,
     params: dict[str, Any],
     run_dir: str | None,
+    test_mode: bool=False
 ) -> None:
     """Train *net* for *epochs* and save checkpoints in *run_dir*.
 
@@ -57,6 +58,10 @@ def train(
             optimizer.step()
             running_loss += loss.item()
 
+
+            if test_mode:
+                break
+
         train_loss = running_loss / len(train_loader)
 
         # ── validation ─────────────────────────────────────────────
@@ -69,6 +74,13 @@ def train(
                 batch_size = inputs.size(0)
                 vloss += criterion(outputs, labels).item() * batch_size
                 nsamp += batch_size
+
+
+                if test_mode:
+                    break
+
+
+
 
         val_loss = vloss / nsamp
 
