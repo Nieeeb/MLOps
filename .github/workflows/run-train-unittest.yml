@@ -28,4 +28,4 @@ jobs:
           ls
 
       - name: Run train_unittest.py
-        run: python train_unittest.py
+        run: python code_tests/train_unittest.py
