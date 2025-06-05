@@ -19,4 +19,4 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_RSA_KEY }}
           script: |
-            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }} 'pwd %% ls'
+            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }} 'cd /ceph/project/DAKI4-thermal-2025/MLops/train_branch/MLOps && pwd %% ls'
