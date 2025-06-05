@@ -12,11 +12,11 @@ jobs:
         uses: actions/checkout@v4  
       - name: Check contents of script file
         run: cat .github/workflows/scripts/train_and_valid.sh
-      - name: Execute remote SSH commands using ssh key
+      - name: Initiate Training of Model
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_GATEWAY }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_RSA_KEY }}
           script: |
-            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }} 'cd /ceph/project/DAKI4-thermal-2025/MLops/train_branch/MLOps && pwd %% ls'
+            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }} 'cd /ceph/project/DAKI4-thermal-2025/MLops/train_branch/MLOps && pwd && git pull'
