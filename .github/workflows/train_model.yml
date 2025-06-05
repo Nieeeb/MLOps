@@ -1,4 +1,4 @@
-name: Remote SSH Command
+name: Train and Validate New Model
 on:
   push:
     branches:
@@ -8,6 +8,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4  
+      - name: Run a script
+        run: ./my-script.sh
       - name: Execute remote SSH commands using ssh key
         uses: appleboy/ssh-action@v1
         with:
@@ -15,5 +19,4 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_RSA_KEY }}
           script: |
-            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }}
-            nodesummary
+            cat .github/workflows/scripts/train_and_valid.sh | ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }}
