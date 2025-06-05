@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=train_yolo
+#SBATCH --job-name=train_CIFAR10_Model
 #SBATCH --time=11:57:00
 #SBATCH --signal=B:SIGTERM@60
 #SBATCH --cpus-per-task=15
@@ -10,8 +10,8 @@
 
 # tweak this to fit your needs
 max_restarts=24
-num_gpus=8
-args_file="utils/args.yaml"
+num_gpus=
+args_file="configs/params.yaml"
 #SBATCH --nodelist=ailab-l4-05
 
 # tweak settings to match set parameters
