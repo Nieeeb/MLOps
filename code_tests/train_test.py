@@ -6,6 +6,11 @@ import torch
 import torch.nn as nn
 import yaml
 
+import sys
+
+project_root = Path(__file__).parent.parent.resolve()
+sys.path.insert(0, str(project_root))
+
 from nets.net import Net
 from train import train  
 
@@ -47,5 +52,32 @@ class TrainFunctionTests(unittest.TestCase):
             self.assertTrue(ckpt0.is_file(), msg="checkpoint_000.pt missing")
             self.assertTrue(ckpt_last.is_file(), msg="checkpoint_last.pt missing")
 
+
+
+            # Load the checkpoint and verify keys
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            ckpt_dict = torch.load(ckpt0, map_location=device)
+
+            for key in ("epoch", "model", "optim", "train_loss", "val_loss"):
+                self.assertIn(key, ckpt_dict, msg=f"Key {key} not found in checkpoint")
+
+
+            net.load_state_dict(ckpt_dict["model"])
+
+            net.to(device)
+            net.eval()
+            dummy_input = torch.randn(2, 3, 32, 32, device=device)
+
+            with torch.no_grad():
+                output = net(dummy_input)
+
+            self.assertEqual(
+                tuple(output.shape),
+                (2, 10),
+                msg=f"Expected output shape (2,10), got {tuple(output.shape)}"
+            )
+
+if __name__ == "__main__":
+    unittest.main()
 
 

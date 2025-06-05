@@ -120,6 +120,7 @@ def main():
         valid_loader,
         params=params,
         run_dir=params.get("run_dir"),
+        test_mode=False
     )
 
 
