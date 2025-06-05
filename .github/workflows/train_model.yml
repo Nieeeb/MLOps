@@ -11,7 +11,9 @@ jobs:
       - name: Execute remote SSH commands using ssh key
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.SSH_REMOTE }}
+          host: ${{ secrets.SSH_GATEWAY }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_RSA_KEY }}
-          script: whoami
+          script: |
+            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }}
+            nodesummary
