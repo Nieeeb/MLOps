@@ -19,4 +19,4 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_RSA_KEY }}
           script: |
-            cat .github/workflows/scripts/train_and_valid.sh | ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }}
+            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }} 'bash -s' < .github/workflows/scripts/train_and_valid.sh ${{ secrets.SSH_TRAIN_BRANCH_PATH }}
