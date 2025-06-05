@@ -3,4 +3,3 @@ numpy
 PyYAML
 torch
 torchvision
-pre-commit
