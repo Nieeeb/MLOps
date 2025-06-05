@@ -27,5 +27,4 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run train_unittest.py
-        working-directory: ./MLOPS/code_tests
         run: python train_unittest.py
