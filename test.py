@@ -6,7 +6,7 @@ from utils.util import load_params
 
 
 def test() -> None:
-    """Evaluate the trained model on the test set 
+    """Evaluate the trained model on the test set
     and print accuracy/error rate."""
     checkpoint_path = Path("Weights/run_1/checkpoint_000.pt")
 
@@ -18,10 +18,10 @@ def test() -> None:
     params = load_params()
 
     train_loader, valid_loader, test_loader = prepare_cifar10_loaders(
-    batch_size=params.get("batch_size"),
-    data_path=params.get("data_path"),
-    num_workers=params.get("num_workers"),
-    shuffle=params.get("shuffle"),
+        batch_size=params.get("batch_size"),
+        data_path=params.get("data_path"),
+        num_workers=params.get("num_workers"),
+        shuffle=params.get("shuffle"),
     )
 
     total_correct = 0
@@ -40,7 +40,7 @@ def test() -> None:
 
     print(f"Accuracy   : {accuracy:.4%}")
     print(f"Error rate : {error_rate:.4%}")
-    
-    
+
+
 if __name__ == "__main__":
     test()

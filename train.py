@@ -84,7 +84,9 @@ def train(
 
         val_loss = vloss / nsamp
 
-        print(f"Epoch {epoch:3d} │ train {train_loss:.4f} │ val {val_loss:.4f}")
+        print(
+            f"Epoch {epoch:3d} │ train {train_loss:.4f} │ val {val_loss:.4f}"
+        )
 
         # ── checkpoint ────────────────────────────────────────────
         ckpt = {
@@ -100,26 +102,25 @@ def train(
     print("Training finished.")
 
 
-
-
 def main():
-
     params = load_params()
     net = load_model(train=True)
 
     train_loader, valid_loader, test_loader = prepare_cifar10_loaders(
-    batch_size=params.get("batch_size"),
-    data_path=params.get("data_path"),
-    num_workers=params.get("num_workers"),
-    shuffle=params.get("shuffle"),
+        batch_size=params.get("batch_size"),
+        data_path=params.get("data_path"),
+        num_workers=params.get("num_workers"),
+        shuffle=params.get("shuffle"),
     )
 
-    train(net, 
-          params.get('epochs'),
-          train_loader, 
-          valid_loader,
-          params=params,
-          run_dir=params.get('run_dir'))
+    train(
+        net,
+        params.get("epochs"),
+        train_loader,
+        valid_loader,
+        params=params,
+        run_dir=params.get("run_dir"),
+    )
 
 
 if __name__ == "__main__":

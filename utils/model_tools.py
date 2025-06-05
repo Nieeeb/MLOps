@@ -5,15 +5,15 @@ import torch.nn as nn
 
 
 def load_model(
-        train: bool=True,
-        checkpoint: str | Path | None = None, 
+    train: bool = True,
+    checkpoint: str | Path | None = None,
 ) -> nn.Module:
     """Return a Net model on the available device.
 
     If `checkpoint` is provided, load model weights from that file.
     The model is set to training mode by default unless `train=False`.
     """
-    
+
     checkpoint_path = Path(checkpoint)
     if not checkpoint_path.exists():
         raise FileNotFoundError(checkpoint_path)
@@ -24,7 +24,7 @@ def load_model(
 
     # 2. rebuild architecture and fill in weights
     model = Net().to(device)
-    model.load_state_dict(ckpt["model"])        # <─ no second torch.load!
+    model.load_state_dict(ckpt["model"])  # <─ no second torch.load!
 
     # 3. set mode
     model.train(mode=train)
