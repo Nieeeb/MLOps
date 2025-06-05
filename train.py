@@ -10,6 +10,7 @@ import yaml
 from utils.data import prepare_cifar10_loaders
 from utils.model_tools import load_model
 from utils.util import load_params
+from utils.wandb_logging import wandb_init, wandb_log
 
 
 def train(
@@ -79,9 +80,7 @@ def train(
 
         val_loss = vloss / nsamp
 
-        print(
-            f"Epoch {epoch:3d} │ train {train_loss:.4f} │ val {val_loss:.4f}"
-        )
+        wandb_log(val_loss=val_loss, epoch=epoch, loss_avg=train_loss)
 
         # ── checkpoint ────────────────────────────────────────────
         ckpt = {
@@ -99,6 +98,9 @@ def train(
 
 def main():
     params = load_params()
+
+    wandb_init(params)
+
     net = load_model(train=True)
 
     train_loader, valid_loader, test_loader = prepare_cifar10_loaders(

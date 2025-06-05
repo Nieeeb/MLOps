@@ -13,3 +13,6 @@ lr: 0.001         # Learning rate
 epochs: 50        # Number of iterations through the train set
 num_workers: 2    # Number of subprocesses to use for loading data (in DataLoader)
 shuffle: False    # Wether the training data is shuffled or not
+
+#WandB run name parameter
+run_name: "MLOps"        # Name of the run for wandb logging
