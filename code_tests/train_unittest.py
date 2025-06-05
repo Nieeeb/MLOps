@@ -1,18 +1,13 @@
-import tempfile
 import unittest
-from pathlib import Path
-
+import tempfile
 import torch
 import torch.nn as nn
 import yaml
-
 import sys
+from pathlib import Path
 
 project_root = Path(__file__).parent.parent.resolve()
 sys.path.insert(0, str(project_root))
-
-from nets.net import Net
-from train import train  
 
 
 def _dummy_loaders():
@@ -30,11 +25,14 @@ def _dummy_loaders():
 
 class TrainFunctionTests(unittest.TestCase):
     def test_train_checkpointing(self):
-        net = Net()
-        train_loader, valid_loader = _dummy_loaders()                 # Dummy data loaders
-        params = {"epochs": 1, "batch_size": 4, "foo": "bar"}         # Example params
+        from nets.net import Net
+        from train import train
 
-        with tempfile.TemporaryDirectory() as tmpdirname:            
+        net = Net()
+        train_loader, valid_loader = _dummy_loaders()  # Dummy data loaders
+        params = {"epochs": 1, "batch_size": 4, "foo": "bar"}  # Example params
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
             run_dir = Path(tmpdirname) / "my_run_dir"
             train(
                 net=net,
@@ -50,17 +48,20 @@ class TrainFunctionTests(unittest.TestCase):
             ckpt0 = run_dir / "checkpoint_000.pt"
             ckpt_last = run_dir / "checkpoint_last.pt"
             self.assertTrue(ckpt0.is_file(), msg="checkpoint_000.pt missing")
-            self.assertTrue(ckpt_last.is_file(), msg="checkpoint_last.pt missing")
-
-
+            self.assertTrue(
+                ckpt_last.is_file(), msg="checkpoint_last.pt missing"
+            )
 
             # Load the checkpoint and verify keys
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            device = torch.device(
+                "cuda" if torch.cuda.is_available() else "cpu"
+            )
             ckpt_dict = torch.load(ckpt0, map_location=device)
 
             for key in ("epoch", "model", "optim", "train_loss", "val_loss"):
-                self.assertIn(key, ckpt_dict, msg=f"Key {key} not found in checkpoint")
-
+                self.assertIn(
+                    key, ckpt_dict, msg=f"Key {key} not found in checkpoint"
+                )
 
             net.load_state_dict(ckpt_dict["model"])
 
@@ -74,10 +75,9 @@ class TrainFunctionTests(unittest.TestCase):
             self.assertEqual(
                 tuple(output.shape),
                 (2, 10),
-                msg=f"Expected output shape (2,10), got {tuple(output.shape)}"
+                msg=f"Expected output shape (2,10), got {tuple(output.shape)}",
             )
+
 
 if __name__ == "__main__":
     unittest.main()
-
-
