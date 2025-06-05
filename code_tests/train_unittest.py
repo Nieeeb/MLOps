@@ -1,8 +1,6 @@
 import unittest
 import tempfile
 import torch
-import torch.nn as nn
-import yaml
 import sys
 from pathlib import Path
 
@@ -13,7 +11,7 @@ sys.path.insert(0, str(project_root))
 def _dummy_loaders():
     """
     Return two DataLoaders (train, valid),
-    each yielding exactly one small batch of random data.
+    each returning one small batch of random data.
     """
     # CIFAR-like shape: 4 images of size 3×32×32, labels in [0..9]
     x = torch.randn(4, 3, 32, 32)
