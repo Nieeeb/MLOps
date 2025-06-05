@@ -1,2 +1,3 @@
+cd $1
 ls
-nodesumary
+pwd;
