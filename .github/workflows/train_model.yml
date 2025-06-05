@@ -1,0 +1,17 @@
+name: Remote SSH Command
+on:
+  push:
+    branches:
+      - train
+jobs:
+  build:
+    name: Train New Model
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute remote SSH commands using ssh key
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_REMOTE }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_RSA_KEY }}
+          script: whoami
