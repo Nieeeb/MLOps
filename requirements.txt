@@ -1,6 +1,6 @@
 matplotlib
 numpy
+pre-commit
 PyYAML
 torch
 torchvision
-pre-commit

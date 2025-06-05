@@ -26,13 +26,23 @@ def setup_seed(seed: int = 0) -> None:
 
 def visualize_imgs(train_loader, batch_size):
     def imshow(img):
-        img = img * 0.5 + 0.5          # inverse of (x-0.5)/0.5
+        img = img * 0.5 + 0.5  # inverse of (x-0.5)/0.5
         npimg = img.numpy()
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
         plt.show()
 
-    classes = ('plane', 'car', 'bird', 'cat',
-               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+    classes = (
+        "plane",
+        "car",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck",
+    )
 
     # get some random training images
     dataiter = iter(train_loader)
@@ -41,4 +51,4 @@ def visualize_imgs(train_loader, batch_size):
     # show images
     imshow(torchvision.utils.make_grid(images))
     # print labels
-    print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
+    print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
