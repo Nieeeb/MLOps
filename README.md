@@ -58,7 +58,7 @@ This project is licensed under the [MIT License](LICENSE).
 ## Contact
 
 For questions or feedback, reach out via:
-- Email: 
+- Email:
     xschmi23@student.aau.dk,
     vstein23@student.aau.dk,
     wniebo22@student.aau.dk

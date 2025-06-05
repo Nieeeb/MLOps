@@ -1,4 +1,4 @@
-# Architecture taken from: 
+# Architecture taken from:
 # https://docs.pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 
 import torch

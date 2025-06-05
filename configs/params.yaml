@@ -1,6 +1,6 @@
-#TODO
-#Data: hvordan vil vi definere dette??
-data_path: 'Data\CIFAR10'   
+data_path: 'Data\CIFAR10'   # Data Versioning
+
+
 
 #Model. skal vi kunne definere forskellige archs?
 
