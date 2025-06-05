@@ -10,8 +10,6 @@ jobs:
     steps:
       - name: Check out the repository to the runner
         uses: actions/checkout@v4  
-      - name: Run a script
-        run: ./my-script.sh
       - name: Execute remote SSH commands using ssh key
         uses: appleboy/ssh-action@v1
         with:
