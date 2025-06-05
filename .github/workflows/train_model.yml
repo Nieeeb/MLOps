@@ -18,4 +18,5 @@ jobs:
           host: ${{ secrets.SSH_GATEWAY }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_RSA_KEY }}
-          script: ssh {{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }}
+          script: |
+            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }}
