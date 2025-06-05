@@ -18,6 +18,6 @@ jobs:
           host: ${{ secrets.SSH_GATEWAY }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_RSA_KEY }}
-          script: .github/workflows/scripts/train_and_valid.sh ${{ secrets.SSH_USERNAME }} ${{ secrets.SSH_REMOTE }} ${{ secrets.SSH_TRAIN_BRANCH_PATH }}
+          script: ssh {{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }} '${{ secrets.SSH_TRAIN_BRANCH_PATH }} && pwd %% ls'
             #ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }} 'bash -s' << 'ENDSSH'
             #cd ${{ secrets.SSH_TRAIN_BRANCH_PATH }}
