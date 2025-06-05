@@ -4,10 +4,11 @@ import numpy as np
 import yaml
 import matplotlib.pyplot as plt
 import torchvision
+from typing import Dict, Any
 
 
 
-def load_params():
+def load_params() -> Dict[str, Any]:
     with open("configs/params.yaml") as config:
         try:
             params = yaml.safe_load(config)

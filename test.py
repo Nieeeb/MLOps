@@ -1,9 +1,9 @@
-
 from pathlib import Path
 
+from utils.data import prepare_cifar10_loaders
 from utils.model_tools import load_model
 from utils.util import load_params
-from train import load_data
+
 
 def test() -> None:
     """Evaluate the trained model on the test set and print accuracy/error rate."""
@@ -15,7 +15,13 @@ def test() -> None:
     )
 
     params = load_params()
-    _, _, test_loader = load_data(params)
+
+    train_loader, valid_loader, test_loader = prepare_cifar10_loaders(
+    batch_size=params.get("batch_size"),
+    data_path=params.get("data_path"),
+    num_workers=params.get("num_workers"),
+    shuffle=params.get("shuffle"),
+    )
 
     total_correct = 0
     total_samples = 0
@@ -33,6 +39,7 @@ def test() -> None:
 
     print(f"Accuracy   : {accuracy:.4%}")
     print(f"Error rate : {error_rate:.4%}")
+    
     
 if __name__ == "__main__":
     test()
