@@ -4,17 +4,16 @@ import numpy as np
 import yaml
 import matplotlib.pyplot as plt
 import torchvision
+from typing import Dict, Any
 
 
-
-def load_params():
+def load_params() -> Dict[str, Any]:
     with open("configs/params.yaml") as config:
         try:
             params = yaml.safe_load(config)
         except yaml.YAMLError as exc:
             print(exc)
     return params
-
 
 
 def setup_seed(seed: int = 0) -> None:
@@ -33,8 +32,8 @@ def visualize_imgs(train_loader, batch_size):
         plt.show()
 
     classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-    
+               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
     # get some random training images
     dataiter = iter(train_loader)
     images, labels = next(dataiter)
@@ -43,7 +42,3 @@ def visualize_imgs(train_loader, batch_size):
     imshow(torchvision.utils.make_grid(images))
     # print labels
     print(' '.join(f'{classes[labels[j]]:5s}' for j in range(batch_size)))
-
-
-
-
