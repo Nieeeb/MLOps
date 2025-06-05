@@ -88,23 +88,21 @@ def train(
     print("Training finished.")
 
 
-
-
 def main():
 
     params = load_params()
     net = load_model(train=True)
 
     train_loader, valid_loader, test_loader = prepare_cifar10_loaders(
-    batch_size=params.get("batch_size"),
-    data_path=params.get("data_path"),
-    num_workers=params.get("num_workers"),
-    shuffle=params.get("shuffle"),
+        batch_size=params.get("batch_size"),
+        data_path=params.get("data_path"),
+        num_workers=params.get("num_workers"),
+        shuffle=params.get("shuffle"),
     )
 
-    train(net, 
+    train(net,
           params.get('epochs'),
-          train_loader, 
+          train_loader,
           valid_loader,
           params=params,
           run_dir=params.get('run_dir'))
