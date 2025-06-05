@@ -6,7 +6,8 @@ from utils.util import load_params
 
 
 def test() -> None:
-    """Evaluate the trained model on the test set and print accuracy/error rate."""
+    """Evaluate the trained model on the test set 
+    and print accuracy/error rate."""
     checkpoint_path = Path("Weights/run_1/checkpoint_000.pt")
 
     net = load_model(
