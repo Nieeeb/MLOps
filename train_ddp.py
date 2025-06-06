@@ -137,11 +137,13 @@ def validate_epoch(
     )
     v_loss = util.AverageMeter()
 
+    print("Defines v_loss")
     # If in DDP, sampler needs current epoch
     # Used to determine which data shuffle to use if GPUs get desynced
     if args.world_size > 1:
         validation_sampler.set_epoch(epoch)
 
+    print("validation sampler set up")
     # Iterates through validation set
     # Disables gradient calculations
     with torch.no_grad():
