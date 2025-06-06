@@ -148,6 +148,7 @@ def validate_epoch(
     # Disables gradient calculations
     with torch.no_grad():
         for batchidx, (samples, targets) in enumerate(validation_loader):
+            print("reached the loop where we enumerate the validation loader")
             # Sending data to appropriate GPU
             samples, targets = samples.to(args.local_rank), targets.to(
                 args.local_rank
