@@ -67,7 +67,6 @@ def train_epoch(
     params,
     model,
     optimizer,
-    scheduler,
     train_loader,
     train_sampler,
     criterion,
@@ -116,7 +115,7 @@ def train_epoch(
 
         optimizer.step()  # Steps the optimizer
 
-    scheduler.step()  # Step learning rate scheduler
+    # scheduler.step()  # Step learning rate scheduler
 
     return m_loss
 
