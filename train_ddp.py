@@ -71,7 +71,6 @@ def train_epoch(
     train_sampler,
     criterion,
     epoch,
-    resize=False,
 ):
     m_loss = util.AverageMeter()
     # If in DDP, sampler needs current epoch
@@ -244,6 +243,20 @@ def train(rank, args, params):
                 epoch=epoch,
             )
 
+            run_dir = params.get("run_dir")
+
+            ckpt = {
+                "epoch": epoch,
+                "model": net.state_dict(),
+                "optim": optimizer.state_dict(),
+                "train_loss": m_loss,
+                "val_loss": v_loss,
+            }
+            torch.save(
+                ckpt, os.path.join(run_dir, f"checkpoint_{epoch:03d}.pt")
+            )
+            torch.save(ckpt, os.path.join(run_dir, "checkpoint_last.pt"))
+
             if args.local_rank == 0:
                 print(
                     f"Validation for epoch {epoch} complete. Val Loss is at: {v_loss.avg}"
@@ -252,17 +265,6 @@ def train(rank, args, params):
 
                 del m_loss
                 del v_loss
-
-            # # Saving checkpoint
-            # if args.local_rank == 0:
-            #     save_checkpoint(
-            #         model,
-            #         optimizer,
-            #         scheduler,
-            #         epoch + 1,
-            #         params.get("checkpoint_path"),
-            #         yolo_size="m",
-            #     )
 
         # Training complete
         if args.local_rank == 0:

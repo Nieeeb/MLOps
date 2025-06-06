@@ -4,7 +4,7 @@ data_path: 'Data\CIFAR10'   # Data Versioning
 
 #Model. skal vi kunne definere forskellige archs?
 
-run_dir: 'Weights\run_1'  # Directory where checkpoints are saved
+run_dir: 'Weights\ddp_test_run1'  # Directory where checkpoints are saved
 
 
 # Training Parameters
