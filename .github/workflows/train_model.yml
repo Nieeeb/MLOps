@@ -9,9 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository to the runner
-        uses: actions/checkout@v4  
-      - name: Check contents of script file
-        run: cat .github/workflows/scripts/train_and_valid.sh
+        uses: actions/checkout@v4
       - name: Initiate Training of Model
         uses: appleboy/ssh-action@v1
         with:
@@ -19,4 +17,4 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_RSA_KEY }}
           script: |
-            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }} 'cd /ceph/project/DAKI4-thermal-2025/MLops/train_branch/MLOps && pwd && git pull'
+            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_REMOTE }} 'cd /ceph/project/DAKI4-thermal-2025/MLops/train_branch/MLOps && pwd && git fetch --all && git reset --hard origin/train && sbatch train.sh'
