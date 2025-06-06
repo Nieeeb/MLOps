@@ -83,15 +83,16 @@ def train_epoch(
     model.train()
 
     # Iterates through the training set
-    for batchidx, (samples, targets, shapes) in enumerate(train_loader):
+    for batchidx, (samples, targets) in enumerate(train_loader):
         # Sends data to appropriate GPU device
         samples, targets = samples.to(args.local_rank), targets.to(
             args.local_rank
         )
-
-        if resize:
-            resize = torchvision.transforms.Resize((128, 128))
-            samples = resize(samples)
+        if args.local_rank == 0:
+            print(f"Size of samples in training: {samples.shape}")
+        # if resize:
+        #     resize = torchvision.transforms.Resize((128, 128))
+        #     samples = resize(samples)
 
         optimizer.zero_grad()
 
@@ -145,17 +146,15 @@ def validate_epoch(
     # Iterates through validation set
     # Disables gradient calculations
     with torch.no_grad():
-        for batchidx, (samples, targets, shapes) in enumerate(
-            validation_loader
-        ):
+        for batchidx, (samples, targets) in enumerate(validation_loader):
             # Sending data to appropriate GPU
             samples, targets = samples.to(args.local_rank), targets.to(
                 args.local_rank
             )
 
-            if resize:
-                resize = torchvision.transforms.Resize((128, 128))
-                samples = resize(samples)
+            # if resize:
+            #     resize = torchvision.transforms.Resize((128, 128))
+            #     samples = resize(samples)
 
             samples = (
                 samples.float() / 255
