@@ -197,3 +197,7 @@ cython_debug/
 
 # git should ignore the data folder, as its too big to push
 Data/
+
+# We do not wish to sync the secrets folder
+secrets/
+Secrets/
