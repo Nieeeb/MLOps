@@ -13,6 +13,7 @@ import torchvision
 import torch.nn as nn
 from utils.wandb_logging import wandb_init, wandb_log
 
+
 warnings.filterwarnings("ignore")
 
 
@@ -66,7 +67,6 @@ def train_epoch(
     params,
     model,
     optimizer,
-    scheduler,
     train_loader,
     train_sampler,
     criterion,
@@ -74,7 +74,6 @@ def train_epoch(
     resize=False,
 ):
     m_loss = util.AverageMeter()
-
     # If in DDP, sampler needs current epoch
     # Used to determine which data shuffle to use if GPUs get desynced
     if args.world_size > 1:
@@ -84,15 +83,16 @@ def train_epoch(
     model.train()
 
     # Iterates through the training set
-    for batchidx, (samples, targets, shapes) in enumerate(train_loader):
+    for batchidx, (samples, targets) in enumerate(train_loader):
         # Sends data to appropriate GPU device
         samples, targets = samples.to(args.local_rank), targets.to(
             args.local_rank
         )
-
-        if resize:
-            resize = torchvision.transforms.Resize((128, 128))
-            samples = resize(samples)
+        if args.local_rank == 0:
+            print(f"Size of samples in training: {samples.shape}")
+        # if resize:
+        #     resize = torchvision.transforms.Resize((128, 128))
+        #     samples = resize(samples)
 
         optimizer.zero_grad()
 
@@ -116,7 +116,7 @@ def train_epoch(
 
         optimizer.step()  # Steps the optimizer
 
-    scheduler.step()  # Step learning rate scheduler
+    # scheduler.step()  # Step learning rate scheduler
 
     return m_loss
 
@@ -146,17 +146,15 @@ def validate_epoch(
     # Iterates through validation set
     # Disables gradient calculations
     with torch.no_grad():
-        for batchidx, (samples, targets, shapes) in enumerate(
-            validation_loader
-        ):
+        for batchidx, (samples, targets) in enumerate(validation_loader):
             # Sending data to appropriate GPU
             samples, targets = samples.to(args.local_rank), targets.to(
                 args.local_rank
             )
 
-            if resize:
-                resize = torchvision.transforms.Resize((128, 128))
-                samples = resize(samples)
+            # if resize:
+            #     resize = torchvision.transforms.Resize((128, 128))
+            #     samples = resize(samples)
 
             samples = (
                 samples.float() / 255

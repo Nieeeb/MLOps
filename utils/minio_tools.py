@@ -1,6 +1,5 @@
 from minio.error import S3Error
 import os
-import json
 import urllib3
 import json
 from minio import Minio
