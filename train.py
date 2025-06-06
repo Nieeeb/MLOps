@@ -37,6 +37,7 @@ def train(
     """
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    tracker = CarbonTracker(epochs=epochs)
 
     if run_dir is None:
         stamp = time.strftime("%Y-%m-%d_%H-%M-%S")
@@ -50,6 +51,7 @@ def train(
 
     for epoch in range(epochs):
         # ── training ───────────────────────────────────────────────
+        tracker.epoch_start()
         net.train()
         running_loss = 0.0
 
@@ -82,6 +84,8 @@ def train(
 
         val_loss = vloss / nsamp
 
+        tracker.epoch_end()
+
         wandb_log(val_loss=val_loss, epoch=epoch, loss_avg=train_loss)
 
         # ── checkpoint ────────────────────────────────────────────
@@ -99,9 +103,10 @@ def train(
     upload_local_directory_to_minio(
         local_path=run_dir,
         credentials=credentials,
-        minio_path="",
+        minio_path="Weights/",
         client=client,
     )
+    tracker.stop()
     print("Training finished.")
 
 
