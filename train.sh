@@ -55,4 +55,4 @@ trap 'term_handler' SIGTERM
 #######################################################################################
 
 # Use srun to dynamically specify the output and error files
-srun --output="${outfile}" --error="${errfile}" singularity exec --nv /ceph/project/DAKI4-thermal-2025/container.sif python train.py
+srun --output="${outfile}" --error="${errfile}" singularity exec --nv /ceph/project/DAKI4-thermal-2025/container.sif python train_ddp.py --args_file=$args_file --world_size=$num_gpus
