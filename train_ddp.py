@@ -147,40 +147,42 @@ def validate_epoch(
     # Iterates through validation set
     # Disables gradient calculations
     print(f"Samples in validation loader: {len(validation_loader)}")
-    with torch.no_grad():
-        print("Can do torch no grad")
-        for batchidx, (samples, targets) in enumerate(validation_loader):
-            print("reached the loop where we enumerate the validation loader")
-            # Sending data to appropriate GPU
-            samples, targets = samples.to(args.local_rank), targets.to(
-                args.local_rank
-            )
 
-            if args.local_rank == 0:
-                print(f"Val batch nr: {batchidx}, size: {samples.shape}")
+    model.eval()
+    # with torch.no_grad():
+    #     print("Can do torch no grad")
+    for batchidx, (samples, targets) in enumerate(validation_loader):
+        print("reached the loop where we enumerate the validation loader")
+        # Sending data to appropriate GPU
+        samples, targets = samples.to(args.local_rank), targets.to(
+            args.local_rank
+        )
 
-            # if resize:
-            #     resize = torchvision.transforms.Resize((128, 128))
-            #     samples = resize(samples)
+        if args.local_rank == 0:
+            print(f"Val batch nr: {batchidx}, size: {samples.shape}")
 
-            samples = (
-                samples.float() / 255
-            )  # Input images are 8 bit single channel images. Converts to 0-1 floats
+        # if resize:
+        #     resize = torchvision.transforms.Resize((128, 128))
+        #     samples = resize(samples)
 
-            outputs = model(samples)  # Forward pass
+        samples = (
+            samples.float() / 255
+        )  # Input images are 8 bit single channel images. Converts to 0-1 floats
 
-            vloss = criterion(outputs, targets)
+        outputs = model(samples)  # Forward pass
 
-            torch.distributed.reduce(
-                vloss, torch.distributed.ReduceOp.AVG
-            )  # Syncs loss and takes the average across GPUs
-            v_loss.update(vloss.item(), samples.size(0))
+        vloss = criterion(outputs, targets)
 
-            if args.local_rank == 0:
-                print(f"can finish validation iteration nr: {batchidx}")
+        torch.distributed.reduce(
+            vloss, torch.distributed.ReduceOp.AVG
+        )  # Syncs loss and takes the average across GPUs
+        v_loss.update(vloss.item(), samples.size(0))
 
-            del outputs
-            del vloss
+        if args.local_rank == 0:
+            print(f"can finish validation iteration nr: {batchidx}")
+
+        del outputs
+        del vloss
 
     print(f"GPU {args.local_rank} has completed validation")
 
