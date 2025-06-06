@@ -11,7 +11,7 @@ def wandb_init(params):
     )
 
 
-def wandb_log(epoch, val_loss, loss_avg, loss):
+def wandb_log(epoch, loss_avg, val_loss):
     wandb.log(
         {
             "Training step": epoch,
