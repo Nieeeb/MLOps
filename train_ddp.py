@@ -250,8 +250,8 @@ def train(rank, args, params):
                 args,
                 params,
                 model=net,
-                validation_loader=valid_loader,
-                validation_sampler=valid_sampler,
+                validation_loader=test_loader,
+                validation_sampler=test_sampler,
                 criterion=criterion,
                 epoch=epoch,
             )
