@@ -46,7 +46,7 @@ def main():
 # Sets up the process group
 def setup(rank, world_size):
     os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12355"
+    os.environ["MASTER_PORT"] = "23456"
     # os.environ['CUDA_VISIBLE_DEVICES'] = os.getenv('LOCAL_RANK', 0)
     torch.cuda.set_device(rank)
     torch.distributed.init_process_group(
