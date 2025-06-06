@@ -151,6 +151,9 @@ def validate_epoch(
                 args.local_rank
             )
 
+            if args.local_rank == 0:
+                print(f"Val batch nr: {batchidx}, size: {samples.shape}")
+
             # if resize:
             #     resize = torchvision.transforms.Resize((128, 128))
             #     samples = resize(samples)
@@ -167,6 +170,9 @@ def validate_epoch(
                 vloss, torch.distributed.ReduceOp.AVG
             )  # Syncs loss and takes the average across GPUs
             v_loss.update(vloss.item(), samples.size(0))
+
+            if args.local_rank == 0:
+                print(f"can finish validation iteration nr: {batchidx}")
 
             del outputs
             del vloss
