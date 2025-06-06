@@ -146,7 +146,9 @@ def validate_epoch(
     print("validation sampler set up")
     # Iterates through validation set
     # Disables gradient calculations
+    print(f"Samples in validation loader: {len(validation_loader)}")
     with torch.no_grad():
+        print("Can do torch no grad")
         for batchidx, (samples, targets) in enumerate(validation_loader):
             print("reached the loop where we enumerate the validation loader")
             # Sending data to appropriate GPU
