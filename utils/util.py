@@ -5,6 +5,7 @@ import yaml
 import matplotlib.pyplot as plt
 import torchvision
 from typing import Dict, Any
+import math
 
 
 def load_params() -> Dict[str, Any]:
@@ -52,3 +53,16 @@ def visualize_imgs(train_loader, batch_size):
     imshow(torchvision.utils.make_grid(images))
     # print labels
     print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
+
+
+class AverageMeter:
+    def __init__(self):
+        self.num = 0
+        self.sum = 0
+        self.avg = 0
+
+    def update(self, v, n):
+        if not math.isnan(float(v)):
+            self.num = self.num + n
+            self.sum = self.sum + v * n
+            self.avg = self.sum / self.num

@@ -13,6 +13,7 @@ import torchvision
 import torch.nn as nn
 from utils.wandb_logging import wandb_init, wandb_log
 
+
 warnings.filterwarnings("ignore")
 
 
@@ -74,7 +75,6 @@ def train_epoch(
     resize=False,
 ):
     m_loss = util.AverageMeter()
-
     # If in DDP, sampler needs current epoch
     # Used to determine which data shuffle to use if GPUs get desynced
     if args.world_size > 1:
