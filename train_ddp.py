@@ -78,20 +78,14 @@ def train_epoch(
     if args.world_size > 1:
         train_sampler.set_epoch(epoch)
 
-    # Model set to train
     model.train()
 
-    # Iterates through the training set
     for batchidx, (samples, targets) in enumerate(train_loader):
-        # Sends data to appropriate GPU device
         samples, targets = samples.to(args.local_rank), targets.to(
             args.local_rank
         )
         if args.local_rank == 0:
             print(f"Size of samples in training: {samples.shape}")
-        # if resize:
-        #     resize = torchvision.transforms.Resize((128, 128))
-        #     samples = resize(samples)
 
         optimizer.zero_grad()
 
@@ -250,8 +244,8 @@ def train(rank, args, params):
                 args,
                 params,
                 model=net,
-                validation_loader=test_loader,
-                validation_sampler=test_sampler,
+                validation_loader=valid_loader,
+                validation_sampler=valid_sampler,
                 criterion=criterion,
                 epoch=epoch,
             )
