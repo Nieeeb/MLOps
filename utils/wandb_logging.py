@@ -8,7 +8,7 @@ def wandb_init(params):
         config=params,
         group=params.get("run_name"),
         id=params.get("run_name"),
-        resume="alllow",
+        resume="allow",
     )
 
 
