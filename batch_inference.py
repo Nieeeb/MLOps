@@ -21,7 +21,7 @@ def load_model(checkpoint_path, device):
     return model
 
 
-def prepare_test_loader(batch_size=64, data_path="./data"):
+def prepare_test_loader(batch_size=64, data_path="./Data"):
     transform = transforms.Compose(
         [
             transforms.ToTensor(),
@@ -29,7 +29,7 @@ def prepare_test_loader(batch_size=64, data_path="./data"):
         ]
     )
     test_dataset = datasets.CIFAR10(
-        root=data_path, train=False, download=True, transform=transform
+        root=data_path, train=False, download=False, transform=transform
     )
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, shuffle=False
