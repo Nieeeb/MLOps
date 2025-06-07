@@ -201,3 +201,7 @@ Data/
 # We do not wish to sync the secrets folder
 secrets/
 Secrets/
+
+# No need to sync wandb data
+wandb/
+Wandb/
