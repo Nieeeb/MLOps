@@ -54,7 +54,7 @@ def setup(rank, world_size):
         rank=rank,
         world_size=world_size,
         timeout=timedelta(hours=1),
-        device_id=rank,
+        device_id=torch.device(f"cuda:{rank}"),
     )
 
 
