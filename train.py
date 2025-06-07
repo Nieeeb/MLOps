@@ -103,7 +103,7 @@ def train(
     upload_local_directory_to_minio(
         local_path=run_dir,
         credentials=credentials,
-        minio_path="Weights/",
+        minio_path="",
         client=client,
     )
     tracker.stop()
