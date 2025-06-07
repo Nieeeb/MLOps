@@ -10,7 +10,7 @@
 
 # tweak this to fit your needs
 max_restarts=24
-num_gpus=1
+num_gpus=2
 args_file="configs/params.yaml"
 #SBATCH --nodelist=ailab-l4-05
 
