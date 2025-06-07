@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 import yaml
 from carbontracker.tracker import CarbonTracker
+from tqdm import tqdm
 
 from utils.data import prepare_cifar10_loaders
 from utils.model_tools import load_model
@@ -49,7 +50,7 @@ def train(
     with open(params_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(params, f)
 
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs), desc="Training Epochs"):
         # ── training ───────────────────────────────────────────────
         tracker.epoch_start()
         net.train()

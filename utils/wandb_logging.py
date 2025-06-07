@@ -20,10 +20,3 @@ def wandb_log(epoch, loss_avg, val_loss):
             "Validation loss": val_loss,
         }
     )
-
-
-if __name__ == "__main__":
-    params = {"run_name": "no_train_test"}
-    wandb_init(params)
-    for i in range(1000):
-        wandb_log(epoch=i, val_loss=i + 1, loss_avg=i + 2)
