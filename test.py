@@ -17,7 +17,7 @@ def test() -> None:
 
     params = load_params()
 
-    train_loader, valid_loader, test_loader = prepare_cifar10_loaders(
+    train_loader, valid_loader, test_loader, _, _, _ = prepare_cifar10_loaders(
         batch_size=params.get("batch_size"),
         data_path=params.get("data_path"),
         num_workers=params.get("num_workers"),
