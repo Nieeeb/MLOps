@@ -14,6 +14,7 @@ from utils.model_tools import load_model
 from utils.util import load_params
 from utils.wandb_logging import wandb_init, wandb_log
 from utils.minio_tools import create_session, upload_local_directory_to_minio
+from utils.wandb_registry import wandb_model_reg
 
 
 def train(
@@ -104,6 +105,7 @@ def train(
         }
         torch.save(ckpt, os.path.join(run_dir, f"checkpoint_{epoch:03d}.pt"))
         torch.save(ckpt, os.path.join(run_dir, "checkpoint_last.pt"))
+        wandb_model_reg(run_dir)
 
     client, credentials = create_session()
     upload_local_directory_to_minio(
