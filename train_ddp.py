@@ -50,7 +50,7 @@ def setup(rank, world_size):
     # os.environ['CUDA_VISIBLE_DEVICES'] = os.getenv('LOCAL_RANK', 0)
     torch.cuda.set_device(rank)
     torch.distributed.init_process_group(
-        "nccl",
+        backend="gloo",
         rank=rank,
         world_size=world_size,
         timeout=timedelta(hours=1),
