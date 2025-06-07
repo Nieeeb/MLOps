@@ -5,6 +5,7 @@ import json
 from minio import Minio
 import urllib3
 from typing import Tuple, Dict
+from tqdm import tqdm
 
 
 def collect_files_in_directory(path: str):
@@ -21,9 +22,8 @@ def upload_local_directory_to_minio(
     try:
         assert os.path.isdir(local_path)
         files = collect_files_in_directory(local_path)
-        for file in files:
+        for file in tqdm(files, desc="Uploading Files to Minio"):
             remote_path = os.path.join(minio_path, file)
-            print(f"Uploading {file} to {remote_path}", flush=True)
             client.fput_object(credentials["bucket"], remote_path, file)
     except S3Error as exc:
         print("error occurred.", exc)

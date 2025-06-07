@@ -4,15 +4,15 @@ data_path: 'Data/CIFAR10'   # Data Versioning
 
 #Model. skal vi kunne definere forskellige archs?
 
-run_dir: 'Weights/run_1'  # Directory where checkpoints are saved
+run_dir: 'Weights/run_testing'  # Directory where checkpoints are saved
 
 
 # Training Parameters
 batch_size: 5000    # Batch size per GPU
 lr: 0.001         # Learning rate
-epochs: 50        # Number of iterations through the train set
+epochs: 300        # Number of iterations through the train set
 num_workers: 16    # Number of subprocesses to use for loading data (in DataLoader)
-shuffle: False    # Wether the training data is shuffled or not
+shuffle: True    # Wether the training data is shuffled or not
 
 
 #WandB run name parameter

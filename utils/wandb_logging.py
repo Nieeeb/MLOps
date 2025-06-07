@@ -17,6 +17,6 @@ def wandb_log(epoch, loss_avg, val_loss):
         {
             "Epoch": epoch,
             "Training loss average": loss_avg,
-            "Validatoin loss": val_loss,
+            "Validation loss": val_loss,
         }
     )
