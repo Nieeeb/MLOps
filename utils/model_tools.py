@@ -14,7 +14,7 @@ def load_model(
     The model is set to training mode by default unless `train=False`.
     """
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if checkpoint:
         checkpoint_path = Path(checkpoint)

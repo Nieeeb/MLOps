@@ -54,10 +54,11 @@ def train(
         tracker.epoch_start()
         net.train()
         running_loss = 0.0
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         for inputs, labels in train_loader:
-            inputs = inputs.cuda()
-            labels = labels.cuda()
+            inputs = inputs.to(device)
+            labels = labels.to(device)
             optimizer.zero_grad()
             outputs = net(inputs)
             loss = criterion(outputs, labels)
@@ -76,8 +77,8 @@ def train(
 
         with torch.no_grad():
             for inputs, labels in valid_loader:
-                inputs = inputs.cuda()
-                labels = labels.cuda()
+                inputs = inputs.to(device)
+                labels = labels.to(device)
                 outputs = net(inputs)
                 batch_size = inputs.size(0)
                 vloss += criterion(outputs, labels).item() * batch_size
