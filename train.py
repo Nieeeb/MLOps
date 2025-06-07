@@ -56,6 +56,8 @@ def train(
         running_loss = 0.0
 
         for inputs, labels in train_loader:
+            inputs = inputs.cuda()
+            labels = labels.cuda()
             optimizer.zero_grad()
             outputs = net(inputs)
             loss = criterion(outputs, labels)
@@ -74,6 +76,8 @@ def train(
 
         with torch.no_grad():
             for inputs, labels in valid_loader:
+                inputs = inputs.cuda()
+                labels = labels.cuda()
                 outputs = net(inputs)
                 batch_size = inputs.size(0)
                 vloss += criterion(outputs, labels).item() * batch_size
