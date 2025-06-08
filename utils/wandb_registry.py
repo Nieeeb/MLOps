@@ -2,9 +2,7 @@ from pathlib import Path
 import wandb
 
 
-def wandb_model_reg(run_dir):
-    run = wandb.init(project="collection-linking-quickstart")
-
+def wandb_model_reg(run_dir, run):
     artifact_filepath = Path(run_dir) / "checkpoint_last.pt"
     if not artifact_filepath.exists():
         raise FileNotFoundError(
@@ -18,8 +16,10 @@ def wandb_model_reg(run_dir):
     )
     artifact.add_file(str(artifact_filepath))
 
-    run.log_artifact(artifact)
+    logged_artifact = run.log_artifact(artifact)
 
-    run.link_artifact(artifact, target_path="wandb-registry-model/Models")
+    run.link_artifact(
+        logged_artifact, target_path="wandb-registry-model/Models"
+    )
 
-    run.finish()
+    wandb.finish()
