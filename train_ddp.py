@@ -46,11 +46,15 @@ def main():
 # Sets up the process group
 def setup(rank, world_size):
     os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12355"
+    os.environ["MASTER_PORT"] = "61111"
     # os.environ['CUDA_VISIBLE_DEVICES'] = os.getenv('LOCAL_RANK', 0)
     torch.cuda.set_device(rank)
     torch.distributed.init_process_group(
-        "nccl", rank=rank, world_size=world_size, timeout=timedelta(hours=1)
+        backend="gloo",
+        rank=rank,
+        world_size=world_size,
+        timeout=timedelta(hours=1),
+        device_id=torch.device(f"cuda:{rank}"),
     )
 
 
@@ -71,7 +75,6 @@ def train_epoch(
     train_sampler,
     criterion,
     epoch,
-    resize=False,
 ):
     m_loss = util.AverageMeter()
     # If in DDP, sampler needs current epoch
@@ -79,20 +82,14 @@ def train_epoch(
     if args.world_size > 1:
         train_sampler.set_epoch(epoch)
 
-    # Model set to train
     model.train()
 
-    # Iterates through the training set
     for batchidx, (samples, targets) in enumerate(train_loader):
-        # Sends data to appropriate GPU device
         samples, targets = samples.to(args.local_rank), targets.to(
             args.local_rank
         )
         if args.local_rank == 0:
             print(f"Size of samples in training: {samples.shape}")
-        # if resize:
-        #     resize = torchvision.transforms.Resize((128, 128))
-        #     samples = resize(samples)
 
         optimizer.zero_grad()
 
@@ -138,23 +135,29 @@ def validate_epoch(
     )
     v_loss = util.AverageMeter()
 
+    print("Defines v_loss")
     # If in DDP, sampler needs current epoch
     # Used to determine which data shuffle to use if GPUs get desynced
     if args.world_size > 1:
         validation_sampler.set_epoch(epoch)
 
+    print("validation sampler set up")
     # Iterates through validation set
     # Disables gradient calculations
+    print(f"Samples in validation loader: {len(validation_loader)}")
+
+    model.eval()
     with torch.no_grad():
+        #     print("Can do torch no grad")
         for batchidx, (samples, targets) in enumerate(validation_loader):
+            print("reached the loop where we enumerate the validation loader")
             # Sending data to appropriate GPU
             samples, targets = samples.to(args.local_rank), targets.to(
                 args.local_rank
             )
 
-            # if resize:
-            #     resize = torchvision.transforms.Resize((128, 128))
-            #     samples = resize(samples)
+            if args.local_rank == 0:
+                print(f"Val batch nr: {batchidx}, size: {samples.shape}")
 
             samples = (
                 samples.float() / 255
@@ -164,10 +167,14 @@ def validate_epoch(
 
             vloss = criterion(outputs, targets)
 
-            torch.distributed.reduce(
-                vloss, torch.distributed.ReduceOp.AVG
-            )  # Syncs loss and takes the average across GPUs
-            v_loss.update(vloss.item(), samples.size(0))
+            if args.world_size > 1:
+                torch.distributed.reduce(
+                    vloss, torch.distributed.ReduceOp.AVG
+                )  # Syncs loss and takes the average across GPUs
+                v_loss.update(vloss.item(), samples.size(0))
+
+            if args.local_rank == 0:
+                print(f"can finish validation iteration nr: {batchidx}")
 
             del outputs
             del vloss
@@ -244,6 +251,20 @@ def train(rank, args, params):
                 epoch=epoch,
             )
 
+            run_dir = params.get("run_dir")
+
+            ckpt = {
+                "epoch": epoch,
+                "model": net.state_dict(),
+                "optim": optimizer.state_dict(),
+                "train_loss": m_loss,
+                "val_loss": v_loss,
+            }
+            torch.save(
+                ckpt, os.path.join(run_dir, f"checkpoint_{epoch:03d}.pt")
+            )
+            torch.save(ckpt, os.path.join(run_dir, "checkpoint_last.pt"))
+
             if args.local_rank == 0:
                 print(
                     f"Validation for epoch {epoch} complete. Val Loss is at: {v_loss.avg}"
@@ -252,17 +273,6 @@ def train(rank, args, params):
 
                 del m_loss
                 del v_loss
-
-            # # Saving checkpoint
-            # if args.local_rank == 0:
-            #     save_checkpoint(
-            #         model,
-            #         optimizer,
-            #         scheduler,
-            #         epoch + 1,
-            #         params.get("checkpoint_path"),
-            #         yolo_size="m",
-            #     )
 
         # Training complete
         if args.local_rank == 0:
