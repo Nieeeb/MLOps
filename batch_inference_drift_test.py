@@ -49,7 +49,9 @@ class DriftDetector:  # class, so that it can keep the state of accuracies acros
         std_dev = variance**0.5
 
         print(
-            f"Accuracy is: {acc}, drift is detected if acc under: {(self.mean - self.threshold * std_dev)}"
+            f"""Accuracy is: {acc},
+drift is detected if acc under:
+{(self.mean - self.threshold * std_dev)}"""
         )
 
         return acc < (self.mean - self.threshold * std_dev)
