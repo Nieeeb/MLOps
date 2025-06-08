@@ -1,6 +1,14 @@
+carbontracker
 matplotlib
+minio
+model_compression_toolkit
 numpy
-pre-commit
+Pillow
 PyYAML
+scikit_learn
+seaborn
 torch
 torchvision
+tqdm
+urllib3
+wandb
