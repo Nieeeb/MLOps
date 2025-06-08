@@ -5,8 +5,8 @@ import torch.nn as nn
 
 
 def load_model(
-        train: bool = True,
-        checkpoint: str | Path | None = None,
+    train: bool = True,
+    checkpoint: str | Path | None = None,
 ) -> nn.Module:
     """Return a Net model on the available device.
 
@@ -14,18 +14,25 @@ def load_model(
     The model is set to training mode by default unless `train=False`.
     """
 
-    checkpoint_path = Path(checkpoint)
-    if not checkpoint_path.exists():
-        raise FileNotFoundError(checkpoint_path)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # 1. read the file → dict
-    ckpt = torch.load(checkpoint_path, map_location=device)
+    if checkpoint:
+        checkpoint_path = Path(checkpoint)
+        if not checkpoint_path.exists():
+            raise FileNotFoundError(checkpoint_path)
 
-    # 2. rebuild architecture and fill in weights
-    model = Net().to(device)
-    model.load_state_dict(ckpt["model"])        # <─ no second torch.load!
+        # 1. read the file → dict
+        ckpt = torch.load(checkpoint_path, map_location=device)
 
-    # 3. set mode
-    model.train(mode=train)
+        # 2. rebuild architecture and fill in weights
+        model = Net().to(device)
+        model.load_state_dict(ckpt["model"])  # <─ no second torch.load!
+
+    else:
+        model = Net().to(device)
+
+    if train:
+        model.train()
+    else:
+        model.eval()
     return model
