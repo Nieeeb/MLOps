@@ -7,12 +7,15 @@ import torch.nn as nn
 import torch.optim as optim
 import yaml
 from carbontracker.tracker import CarbonTracker
+from tqdm import tqdm
+from wandb import wandb_run
 
 from utils.data import prepare_cifar10_loaders
 from utils.model_tools import load_model
 from utils.util import load_params
 from utils.wandb_logging import wandb_init, wandb_log
 from utils.minio_tools import create_session, upload_local_directory_to_minio
+from utils.wandb_registry import wandb_model_reg
 
 
 def train(
@@ -23,6 +26,7 @@ def train(
     params: dict[str, Any],
     run_dir: str | None,
     test_mode: bool = False,
+    run: Any = None,
 ) -> None:
     """Train *net* for *epochs* and save checkpoints in *run_dir*.
 
@@ -37,6 +41,7 @@ def train(
     """
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    tracker = CarbonTracker(epochs=epochs)
 
     if run_dir is None:
         stamp = time.strftime("%Y-%m-%d_%H-%M-%S")
@@ -48,17 +53,25 @@ def train(
     with open(params_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(params, f)
 
-    for epoch in range(epochs):
+    scaler = torch.amp.GradScaler("cuda")
+    for epoch in tqdm(range(epochs), desc="Training Epochs"):
         # ── training ───────────────────────────────────────────────
+        tracker.epoch_start()
         net.train()
         running_loss = 0.0
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         for inputs, labels in train_loader:
+            inputs = inputs.to(device)
+            labels = labels.to(device)
             optimizer.zero_grad()
-            outputs = net(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+            with torch.autocast(device_type="cuda"):
+                outputs = net(inputs)
+                loss = criterion(outputs, labels)
+            scaler.scale(loss).backward()
+            # optimizer.step()
+            scaler.step(optimizer)
+            scaler.update()
             running_loss += loss.item()
 
             if test_mode:
@@ -72,15 +85,20 @@ def train(
 
         with torch.no_grad():
             for inputs, labels in valid_loader:
-                outputs = net(inputs)
-                batch_size = inputs.size(0)
-                vloss += criterion(outputs, labels).item() * batch_size
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                with torch.autocast(device_type="cuda"):
+                    outputs = net(inputs)
+                    batch_size = inputs.size(0)
+                    vloss += criterion(outputs, labels).item() * batch_size
                 nsamp += batch_size
 
                 if test_mode:
                     break
 
         val_loss = vloss / nsamp
+
+        tracker.epoch_end()
 
         wandb_log(val_loss=val_loss, epoch=epoch, loss_avg=train_loss)
 
@@ -95,6 +113,8 @@ def train(
         torch.save(ckpt, os.path.join(run_dir, f"checkpoint_{epoch:03d}.pt"))
         torch.save(ckpt, os.path.join(run_dir, "checkpoint_last.pt"))
 
+    wandb_model_reg(run_dir, run)
+
     client, credentials = create_session()
     upload_local_directory_to_minio(
         local_path=run_dir,
@@ -102,13 +122,14 @@ def train(
         minio_path="",
         client=client,
     )
+    tracker.stop()
     print("Training finished.")
 
 
 def main():
     params = load_params()
 
-    wandb_init(params)
+    run = wandb_init(params)
 
     net = load_model(train=True)
 
@@ -127,6 +148,7 @@ def main():
         params=params,
         run_dir=params.get("run_dir"),
         test_mode=False,
+        run=run,
     )
 
 
