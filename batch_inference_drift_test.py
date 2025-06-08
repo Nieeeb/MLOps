@@ -48,7 +48,9 @@ class DriftDetector:  # class, so that it can keep the state of accuracies acros
         variance = self.M2 / (self.count - 1)
         std_dev = variance**0.5
 
-        # print(f"Accuracy is: {acc}, drift is detected if acc under: {(self.mean - self.threshold * std_dev)}")
+        print(
+            f"Accuracy is: {acc}, drift is detected if acc under: {(self.mean - self.threshold * std_dev)}"
+        )
 
         return acc < (self.mean - self.threshold * std_dev)
 
@@ -89,12 +91,12 @@ def main(drift_test: bool = False) -> None:
     (with optional drift testing) over the CIFAR-10 test set.
     """
 
-    model = load_model(train=False, checkpoint="Weights\model.pt")
+    model = load_model(train=False, checkpoint="Weights/model.pt")
 
     params = load_params()
     criterion = nn.CrossEntropyLoss()
 
-    drift_index = 8
+    drift_index = 25
 
     _, _, test_loader, _, _, _ = prepare_cifar10_loaders(
         batch_size=params["test_batch_size"],
@@ -105,7 +107,7 @@ def main(drift_test: bool = False) -> None:
         drift_index=drift_index,
     )
 
-    detector = DriftDetector(threshold=params.get("drift_threshold", 2.0))
+    detector = DriftDetector(threshold=params.get("drift_threshold", 1.7))
 
     for batch_idx, (inputs, labels) in enumerate(test_loader):
         outputs, drift_flag = batch_inference(
@@ -123,9 +125,9 @@ def main(drift_test: bool = False) -> None:
                 visualize_batch(inputs, outputs)
                 break
 
-            elif batch_idx == 8:
-                visualize_batch(inputs, outputs)
-                break
+            # elif batch_idx == 8:
+            #     visualize_batch(inputs, outputs)
+            #     break
 
 
 if __name__ == "__main__":
