@@ -12,8 +12,8 @@ batch_size: 5000    # Batch size per GPU
 lr: 0.001         # Learning rate
 epochs: 300        # Number of iterations through the train set
 num_workers: 16    # Number of subprocesses to use for loading data (in DataLoader)
-shuffle: True    # Wether the training data is shuffled or not
-
+shuffle: True      # Wether the training data is shuffled or not
+test_batch_size: 10
 
 #WandB run name parameter
 run_name: "single_gpu_testing"        # Name of the run for wandb logging
